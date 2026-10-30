@@ -10,6 +10,7 @@
     "start": "node dist/main.js",
     "dev": "pnpm build && node --env-file=../../.env dist/main.js",
     "migrate": "prisma migrate deploy",
+    "seed": "node --env-file-if-exists=../../.env dist/seed.js",
     "openapi:export": "node --env-file-if-exists=../../.env dist/export-openapi.js",
     "lint": "eslint .",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
