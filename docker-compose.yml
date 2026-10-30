@@ -202,6 +202,31 @@ services:
         condition: service_healthy
     networks: [backend]
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_USER: ${RABBITMQ_USER:?}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?}
+      # Mailpit locally; set these to SendGrid or Mailtrap in the cloud (docs/DEPLOY.md).
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-Sinaliza <nao-responder@sinaliza.pt>}
+      NOTIFICATION_RETRY_DELAYS_MS: ${NOTIFICATION_RETRY_DELAYS_MS:-5000,30000}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    networks: [backend]
+
 networks:
   backend:
     name: sinaliza-backend
