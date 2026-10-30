@@ -17,8 +17,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
 - [x] **F3** — municipal-service (categorias, município + limite de Barcelos)
   - Critério: seed e endpoints funcionam ✅ (20 testes e2e + 8 unitários; contentor _healthy_,
     chamada interna verificada a partir de outro contentor)
-- [ ] **F4** — occurrence-service (ocorrências, máquina de estados, PostGIS, MinIO, Nominatim, mapa,
+- [x] **F4** — occurrence-service (ocorrências, máquina de estados, PostGIS, MinIO, Nominatim, mapa,
       estatísticas via Postgres, eventos)
+  - Critério: e2e de ocorrências passam ✅ (29 testes e2e com PostGIS, RabbitMQ e RustFS reais +
+    20 unitários); contentor _healthy_ no compose, teste de fumo com o municipal e o Nominatim reais
 - [ ] **F5** — notification-service (consumidores, templates, retries, DLQ)
 - [ ] **F6** — api-gateway (proxy, JWT, RBAC, CORS, rate limit, docs agregadas)
 - [ ] **F7** — Seed completo + `scripts/verificar.sh`
@@ -56,5 +58,13 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   Rotas internas para o occurrence-service: `GET /internal/categories/:id` e
   `GET /internal/municipality`, com `x-internal-token` (`INTERNAL_API_TOKEN`; ver D13). O
   service-kit ganhou o decorador `@Internal()`.
-- Próximo passo: F4 (occurrence-service). Vai chamar o municipal-service em
-  `http://municipal-service:3000/internal/...` (local: `http://localhost:3002`).
+- F4: `occurrence-service` (porta local 3003). Ocorrências com `location` geography + `lat`/`lng`
+  gerados, referência por contador anual na mesma transação, histórico, transições com concorrência
+  otimista (`updateMany where status = from` → 409), eventos `occurrence.created` e
+  `occurrence.status_changed` (inclui ANULADA). Integrações em `src/integrations/`: municipal
+  (categoria + limite, com `x-internal-token`), `boundary_cache`, Nominatim (cache + 1 pedido/s +
+  recurso às coordenadas) e storage S3 (URLs pré-assinados com `S3_PUBLIC_ENDPOINT`). Estatísticas
+  pela interface `StatsProvider` (só `postgres` por agora; ver D20). Decisões D16–D20.
+- Próximo passo: F5 (notification-service). Consome `user.registered`,
+  `user.password_reset_requested`, `occurrence.created` e `occurrence.status_changed` da exchange
+  `sinaliza.events`; idempotência por `eventId` (ver D16).

@@ -66,7 +66,7 @@ cp .env.example .env         # primeira vez; muda as palavras-passe
 sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commit)
 docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
 docker compose down          # parar (acrescenta -v para apagar os dados)
-docker compose up -d --build --wait identity-service municipal-service   # serviços (migram ao arrancar)
+docker compose up -d --build --wait identity-service municipal-service occurrence-service   # serviços (migram ao arrancar)
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
@@ -74,10 +74,11 @@ pnpm --filter identity-service build && pnpm --filter identity-service seed   # 
 pnpm --filter identity-service dev             # API em :3001 (PORT), Swagger em /docs
 pnpm --filter identity-service test:e2e        # e2e com Testcontainers (Docker a correr)
 pnpm --filter identity-service openapi:export  # escreve docs/api/identity-service.json
-# O mesmo para municipal-service (porta local 3002; carrega categorias e limite ao arrancar).
+# O mesmo para municipal-service (porta local 3002; carrega categorias e limite ao arrancar)
+# e occurrence-service (porta local 3003; precisa do municipal-service e do storage a correr).
 ```
 
-Portas locais dos serviços fora do Docker: identity 3001, municipal 3002 (dentro do Docker todos
+Portas locais dos serviços fora do Docker: identity 3001, municipal 3002, occurrence 3003 (dentro do Docker todos
 usam 3000 e não publicam portas). Rotas `/internal/*` (`@Internal()`) são só para chamadas entre
 serviços, com o cabeçalho `x-internal-token`.
 
@@ -92,6 +93,11 @@ URLs locais: RabbitMQ UI http://localhost:15672 · consola do storage http://loc
 PC do Rodrigo) · Mailpit http://localhost:8025 · PostgreSQL localhost:5432.
 
 O armazenamento de fotografias é RustFS (compatível com S3), não MinIO — ver `docs/DECISOES.md` D05.
+
+occurrence-service: as funções PostGIS usam SQL bruto (`$queryRaw`); `lat`/`lng` são colunas geradas a
+partir de `location` (só leitura). A vista `occurrence_facts` alimenta o dashboard. O limite do concelho
+é copiado do municipal-service para `boundary_cache` no arranque. O reverse geocoding usa o Nominatim
+com o User-Agent do projeto (nunca um email pessoal) e 1 pedido/s.
 
 ## Convenções de código
 

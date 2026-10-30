@@ -146,3 +146,53 @@ Esposende, Viana do Castelo). Dados © colaboradores do OpenStreetMap, licença 
 A regra geral (RNF19) é paginar as listas. As categorias são poucas (seis por omissão) e as apps
 precisam sempre de todas, para os filtros e para o passo 2 do assistente. Paginá-las obrigaria a
 pedidos extra sem benefício, por isso este endpoint devolve um array ordenado pelo nome.
+
+## D16 — Sem `processed_events` na `occurrence_db`
+
+**Data:** 2026-10-30 · **Fase:** F4
+
+A especificação lista a tabela `processed_events` (idempotência) na `occurrence_db`. O
+occurrence-service só publica eventos; não consome nenhum, por isso a tabela ficaria sempre vazia.
+A idempotência é feita por quem consome: o notification-service (F5) guarda os `eventId` já
+tratados. Se no futuro o occurrence-service passar a consumir eventos, a tabela entra numa migração.
+
+## D17 — Coordenadas, bbox e colunas geradas
+
+**Data:** 2026-10-30 · **Fase:** F4
+
+- `location` é `geography(Point, 4326)`, como pede a especificação. `lat` e `lng` são colunas
+  geradas (`ST_Y`/`ST_X`) e guardadas, para o Prisma conseguir filtrar e ordenar sem SQL bruto.
+- O parâmetro `bbox` usa a ordem `oeste,sul,este,norte` (a de `toBBoxString()` do Leaflet e do
+  GeoJSON).
+- `ST_Contains` corre sobre a cópia local do limite (`boundary_cache`), em `geometry`. Se o
+  municipal-service estiver em baixo no arranque, o serviço arranca na mesma e volta a tentar a cada
+  15 s; enquanto não houver limite, criar e validar localizações devolve 503.
+
+## D18 — Erros das chamadas ao municipal-service
+
+**Data:** 2026-10-30 · **Fase:** F4
+
+Se o municipal-service não responder (rede ou tempo limite de 5 s), o occurrence-service devolve 503. Se responder com um erro inesperado, devolve 502. Uma categoria que não existe ou está
+desativada é um erro do pedido: devolve 422 com o campo `categoryId` nos detalhes.
+
+## D19 — Fotografias: chave por utilizador e reprocessamento
+
+**Data:** 2026-10-30 · **Fase:** F4
+
+`POST /photos` deteta o formato pelo conteúdo (não pelo `Content-Type`), roda a imagem pela
+orientação EXIF, remove todos os metadados (incluindo GPS, por privacidade) e grava sempre JPEG,
+baixando a qualidade até ficar com 2 MB ou menos. A chave é `uploads/{userId}/{uuid}.jpg`; ao criar
+a ocorrência só se aceitam chaves com o prefixo do próprio utilizador e que existam no storage. Os
+URLs pré-assinados são assinados com `S3_PUBLIC_ENDPOINT`, porque o endereço interno
+(`http://storage:9000`) não é acessível ao browser nem ao telemóvel.
+
+## D20 — Indicadores do dashboard na base operacional
+
+**Data:** 2026-10-30 · **Fase:** F4
+
+`ANALYTICS_SOURCE=postgres` usa a vista `occurrence_facts` (sem anuladas). Definições: totais e
+taxas sobre as ocorrências **criadas** no período; «resolvidas no período» e tempo médio de
+resolução pela **data de resolução**; dias no calendário de Lisboa. Os _hotspots_ usam uma grelha de
+0,005° (~500 m) em vez de H3, porque o H3 não existe no PostgreSQL sem extensões extra; o
+Databricks (F10) usará H3. Por omissão o período é o mês atual e os 11 anteriores; o máximo é 5 anos.
+A fonte `databricks` entra na F10, atrás da mesma interface `StatsProvider`.
