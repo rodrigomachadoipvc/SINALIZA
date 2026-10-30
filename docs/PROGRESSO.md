@@ -25,7 +25,11 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   - Critério: os emails aparecem no Mailpit ✅ (registo → boas-vindas, ocorrência → confirmação,
     rejeição → email com a fundamentação, no compose); 6 testes e2e com RabbitMQ e Mailpit reais
     (retries, DLQ, duplicados, mensagens ilegíveis) + 12 unitários
-- [ ] **F6** — api-gateway (proxy, JWT, RBAC, CORS, rate limit, docs agregadas)
+- [x] **F6** — api-gateway (proxy, JWT, RBAC, CORS, rate limit, docs agregadas)
+  - Critério: toda a API funciona via :8080 ✅ (37 verificações a partir do anfitrião: todas as
+    rotas das 4 áreas, erros 400/403/404/409/422, fotografia pré-assinada, emails no Mailpit,
+    Swagger agregado no browser); 16 testes e2e + 6 unitários (a lista de rotas é comparada com
+    os specs OpenAPI)
 - [ ] **F7** — Seed completo + `scripts/verificar.sh`
 - [ ] **F8** — Backoffice completo
 - [ ] **F9** — App mobile completa
@@ -73,6 +77,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   idempotência por LRU de `eventId` (D22). Nodemailer com SMTP do `.env` (Mailpit por omissão).
   Templates em `src/email/templates.ts`. Os e2e usam um proxy TCP à frente do Mailpit para simular
   falhas de SMTP.
-- Próximo passo: F6 (api-gateway): único ponto de entrada, verifica o JWT, envia os cabeçalhos
-  `x-user-*` e `x-request-id`, CORS, rate limit, nunca encaminha `/internal`, Swagger com seletor
-  dos specs de `docs/api/`.
+- F6: `api-gateway` em http://localhost:8080 (único contentor de aplicação com porta publicada).
+  Lista explícita de rotas com RBAC (`src/routing/routes.ts`, D24), cabeçalhos limpos e reescritos
+  (D25), corpos em _stream_ (D26), helmet, CORS (`CORS_ORIGINS`), rate limit e Swagger agregado em
+  `/docs` (D27). `docker compose up -d --build --wait` arranca agora tudo.
+- Próximo passo: F7 (seed completo + `scripts/verificar.sh`): as ocorrências da Maria iguais às do
+  protótipo, ~40 de outros cidadãos, `pnpm seed` idempotente; o script sobe o compose, corre o seed
+  e os e2e e imprime ✅/❌ por requisito (RF01–RF20).

@@ -66,7 +66,7 @@ cp .env.example .env         # primeira vez; muda as palavras-passe
 sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commit)
 docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
 docker compose down          # parar (acrescenta -v para apagar os dados)
-docker compose up -d --build --wait identity-service municipal-service occurrence-service notification-service   # serviços (migram ao arrancar)
+docker compose up -d --build --wait   # tudo: infraestrutura, 4 serviços e gateway (API em http://localhost:8080/api, Swagger em /docs)
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
@@ -76,10 +76,11 @@ pnpm --filter identity-service test:e2e        # e2e com Testcontainers (Docker 
 pnpm --filter identity-service openapi:export  # escreve docs/api/identity-service.json
 # O mesmo para municipal-service (porta local 3002; carrega categorias e limite ao arrancar)
 # e occurrence-service (porta local 3003; precisa do municipal-service e do storage a correr)
-# e notification-service (porta local 3004; envia para o Mailpit em localhost:1025).
+# e notification-service (porta local 3004; envia para o Mailpit em localhost:1025)
+# e api-gateway (porta 8080; usa os serviços em localhost:3001–3004).
 ```
 
-Portas locais dos serviços fora do Docker: identity 3001, municipal 3002, occurrence 3003, notification 3004 (dentro do Docker todos
+Portas locais dos serviços fora do Docker: identity 3001, municipal 3002, occurrence 3003, notification 3004, gateway 8080 (dentro do Docker todos
 usam 3000 e não publicam portas). Rotas `/internal/*` (`@Internal()`) são só para chamadas entre
 serviços, com o cabeçalho `x-internal-token`.
 
@@ -104,6 +105,11 @@ notification-service: sem base de dados e sem rotas de utilizador (só `/health`
 `notification.emails` (quorum); falhas de SMTP vão para `notification.emails.retry.<n>ms` e, depois da
 3.ª tentativa, para `notification.emails.dlq` (ver no RabbitMQ UI). Templates em
 `src/email/templates.ts` (HTML + texto, tudo escapado).
+
+api-gateway: as rotas públicas estão numa lista explícita em `src/routing/routes.ts` (método, caminho,
+serviço, acesso). O que não está na lista dá 404 e nunca chega a um serviço. **Quando um serviço ganha
+uma rota nova, acrescenta-a lá e volta a exportar o OpenAPI do serviço**: o teste
+`routes.test.ts` compara a lista com `docs/api/*.json` e falha se divergirem.
 
 ## Convenções de código
 

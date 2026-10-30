@@ -227,3 +227,48 @@ que a especificação diz não ter.
 `coreProviders(null)` cria a guarda global sem verificador de JWT: só as rotas `@Public()` (aqui,
 `/health`) respondem e todas as outras devolvem 401. Assim o notification-service não precisa da
 chave pública do JWT nem de a montar no contentor.
+
+## D24 — O gateway encaminha só as rotas de uma lista explícita
+
+**Data:** 2026-10-30 · **Fase:** F6
+
+`src/routing/routes.ts` lista cada rota pública (método, caminho, serviço e acesso: pública,
+autenticada ou perfis). Um pedido que não está na lista recebe 404 no gateway, e um método errado
+recebe 405 com `Allow`. Assim `/internal/*` e os `/health` dos serviços nunca são acessíveis de fora.
+O RBAC por rota é feito aqui e repetido nos serviços (defesa em profundidade). Para a lista não
+divergir dos serviços, um teste unitário compara-a com os specs OpenAPI em `docs/api/`, incluindo
+quais rotas são públicas. Rejeitámos encaminhar por prefixo (`/api/occurrences/**` → serviço),
+porque deixaria passar qualquer rota nova sem revisão de acesso.
+
+## D25 — Cabeçalhos de identidade e de encaminhamento
+
+**Data:** 2026-10-30 · **Fase:** F6
+
+O gateway apaga sempre os `x-user-*`, o `x-internal-token` e os `X-Forwarded-*`/`Forwarded` que
+o cliente enviar. Depois de verificar o JWT escreve os `x-user-*` (o nome vai codificado com
+`encodeURIComponent`, porque os cabeçalhos HTTP só aceitam Latin-1) e um `X-Forwarded-For` com um
+único IP: o cliente tal como o gateway o vê, segundo `TRUST_PROXY`. Assim um cliente não consegue
+falsificar o IP para fugir ao limite de pedidos do login no identity-service. Localmente
+`TRUST_PROXY=false`; na cloud passa a confiar só no Caddy.
+
+## D26 — O gateway não lê os corpos dos pedidos
+
+**Data:** 2026-10-30 · **Fase:** F6
+
+O Nest arranca com `bodyParser: false` e o `http-proxy-middleware` (v4, sobre o `httpxy`) passa o
+corpo em _stream_. As fotografias (multipart até 5 MB) passam sem cópias em memória, e a validação
+dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503 e tempo esgotado
+(`PROXY_TIMEOUT_MS`, 30 s) dá 504, sempre no formato de erro comum.
+
+## D27 — Rate limit no gateway e documentação agregada
+
+**Data:** 2026-10-30 · **Fase:** F6
+
+- `express-rate-limit`: 300 pedidos por minuto por IP em `/api`, em memória (há uma só instância
+  do gateway), com cabeçalhos `RateLimit` normalizados. O limite mais apertado do login fica no
+  identity-service (D09/F2).
+- `/docs` serve o Swagger UI (`swagger-ui-dist`) com um seletor para os quatro specs. Cada spec vem
+  do `/docs/openapi.json` do serviço, com cache de 1 min, e é reescrito com o servidor `/api` e só
+  as operações que o gateway expõe. O arranque do Swagger UI está num ficheiro `.js` e não em
+  _script inline_, para a CSP do `helmet` ficar estrita. O spec do notification-service não tem
+  operações públicas; aparece no seletor porque a especificação pede os quatro.
