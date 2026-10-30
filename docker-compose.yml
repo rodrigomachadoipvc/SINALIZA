@@ -111,6 +111,38 @@ services:
       timeout: 5s
       retries: 20
 
+  # ------------------------------------------------------------------ services
+  # Internal only: no published ports. The api-gateway (F6) is the single entry point.
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgis
+      POSTGRES_PORT: '5432'
+      IDENTITY_DB_USER: ${IDENTITY_DB_USER:?}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:?}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_USER: ${RABBITMQ_USER:?}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?}
+      JWT_PRIVATE_KEY_PATH: /run/keys/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /run/keys/jwt-public.pem
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+      PASSWORD_RESET_URL: ${PASSWORD_RESET_URL:-http://localhost:5173/redefinir-palavra-passe}
+      AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-10}
+    volumes:
+      - ./infra/keys:/run/keys:ro
+    depends_on:
+      postgis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [backend]
+
 networks:
   backend:
     name: sinaliza-backend

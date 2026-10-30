@@ -67,3 +67,52 @@ mesmas.
 Todas as portas publicadas pela infraestrutura vêm do `.env`, com as da especificação por omissão.
 No PC de desenvolvimento do Rodrigo a porta 9001 está ocupada por um serviço do Windows, por isso o
 `.env` local usa `S3_CONSOLE_PORT=9011`.
+
+## D08 — Pacote `@sinaliza/service-kit`
+
+**Data:** 2026-10-30 · **Fase:** F2
+
+Os cinco serviços NestJS precisam do mesmo formato de erro, do `x-request-id`, da mesma
+`ValidationPipe`, da verificação do JWT, do RBAC e da publicação de eventos. Em vez de copiar esse
+código cinco vezes, fica num pacote do workspace (`packages/service-kit`). Cada serviço continua a
+ter o seu `Dockerfile`, a sua configuração e a sua base de dados; partilham apenas código de
+infraestrutura, não dados nem estado.
+
+## D09 — `POST /auth/refresh` é público
+
+**Data:** 2026-10-30 · **Fase:** F2
+
+A especificação marca o refresh como «autenticado». Mas o refresh serve precisamente para quando o
+access token (15 min) já expirou, por isso exigir um access token válido tornava-o inútil. A
+autenticação deste pedido é o próprio refresh token: opaco, guardado só como SHA-256, válido uma
+única vez (rotativo) e com deteção de reutilização — se um token já usado aparecer outra vez, todas
+as sessões desse utilizador são revogadas. O logout continua a exigir o access token.
+
+## D10 — Publicação de eventos sem bloquear o pedido
+
+**Data:** 2026-10-30 · **Fase:** F2
+
+Os eventos são publicados depois de a transação na BD terminar, sem o pedido HTTP esperar pela
+confirmação do RabbitMQ. A biblioteca `amqp-connection-manager` guarda as mensagens em memória
+enquanto o RabbitMQ está em baixo e envia-as quando volta. O risco que fica é perder eventos se o
+serviço for abaixo nesse intervalo. A solução completa seria o padrão _transactional outbox_
+(tabela de eventos na mesma transação + processo que os publica); fica como melhoria futura, porque
+o efeito de uma falha é apenas um email não enviado.
+
+## D11 — Prisma 7 em vez de Prisma 8
+
+**Data:** 2026-10-30 · **Fase:** F2
+
+A especificação deixa escolher entre Prisma e TypeORM; escolhemos Prisma. O Prisma 8 está publicado
+no npm como `latest`, mas a própria documentação ainda o descreve como _release candidate_.
+Usamos o Prisma 7.10 (estável, `prisma@prev`), com o gerador ESM `prisma-client` e o adaptador
+`@prisma/adapter-pg`. As migrações são SQL versionado em `prisma/migrations/`, aplicadas com
+`prisma migrate deploy` quando o contentor arranca.
+
+## D12 — Testes e2e com Testcontainers
+
+**Data:** 2026-10-30 · **Fase:** F2
+
+Os testes e2e de cada serviço arrancam o seu próprio PostgreSQL e RabbitMQ com Testcontainers, em
+vez de usarem o `docker compose` de desenvolvimento. Assim os testes não apagam nem dependem dos
+dados locais e podem correr em paralelo com a app. Precisam apenas do Docker a correr.

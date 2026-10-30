@@ -1,0 +1,843 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Estado do serviço (usado pelo healthcheck do Docker)",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já existe uma conta com este email."
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Criar conta de cidadão (RF01)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokensDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Email ou palavra-passe incorretos."
+          },
+          "403": {
+            "description": "Conta desativada."
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Iniciar sessão (RF01)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokensDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token inválido, expirado ou já usado."
+          }
+        },
+        "summary": "Renovar a sessão com o refresh token (rotativo)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Terminar sessão (revoga o refresh token)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "description": "Responde sempre 202, para não revelar se o email está registado.",
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Pedir ligação para redefinir a palavra-passe (RF13)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "Ligação inválida ou expirada."
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Definir nova palavra-passe com o token recebido por email (RF13)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/users/me": {
+      "get": {
+        "operationId": "ProfileController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dados do utilizador autenticado (RF18)",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Editar nome e telemóvel; o email não é editável (RF18)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/password": {
+      "post": {
+        "operationId": "ProfileController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "Palavra-passe atual incorreta ou nova inválida."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Alterar a palavra-passe (RF18)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CIDADAO",
+                "GESTOR",
+                "ADMIN"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Pesquisa por nome ou email.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar utilizadores (ADMIN, RF10)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/gestores": {
+      "post": {
+        "operationId": "UsersController_createGestor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGestorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedGestorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já existe uma conta com este email."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Criar conta de gestor municipal (ADMIN, RF10)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Editar nome e telemóvel de um utilizador (ADMIN)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}/deactivate": {
+      "post": {
+        "operationId": "UsersController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Desativar conta e terminar as suas sessões (ADMIN)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}/activate": {
+      "post": {
+        "operationId": "UsersController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reativar conta (ADMIN)",
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Sinaliza · identity-service",
+    "description": "Contas, autenticação (JWT RS256), recuperação de palavra-passe e gestores.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Fernandes",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "example": "maria.fernandes@email.pt"
+          },
+          "password": {
+            "type": "string",
+            "example": "Cidada12345",
+            "description": "Mínimo 8 caracteres, com letras e números."
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Maria Fernandes"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria.fernandes@email.pt"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+351 912 345 678"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CIDADAO",
+              "GESTOR",
+              "ADMIN"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone",
+          "role",
+          "active",
+          "createdAt",
+          "lastLoginAt"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "maria.fernandes@email.pt"
+          },
+          "password": {
+            "type": "string",
+            "example": "Cidada12345"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "TokensDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT RS256, válido durante 15 minutos."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Token opaco, válido durante 7 dias; é substituído a cada refresh."
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900,
+            "description": "Validade do access token, em segundos."
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn",
+          "user"
+        ]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token devolvido no login ou no último refresh."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "maria.fernandes@email.pt"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token recebido na ligação enviada por email."
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NovaPalavra123"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Fernandes",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+351 912 345 678",
+            "description": "Vazio ou null apaga o telemóvel."
+          }
+        }
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NovaPalavra123"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "UsersPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "CreateGestorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "João Silva"
+          },
+          "email": {
+            "type": "string",
+            "example": "joao.silva@cm-barcelos.pt"
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Palavra-passe temporária. Se não for indicada, é gerada automaticamente."
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "CreatedGestorDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Mostrada apenas uma vez; o gestor deve alterá-la."
+          }
+        },
+        "required": [
+          "user",
+          "temporaryPassword"
+        ]
+      }
+    }
+  }
+}

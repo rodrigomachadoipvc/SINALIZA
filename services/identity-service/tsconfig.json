@@ -1,0 +1,15 @@
+{
+  "extends": "@sinaliza/config/tsconfig.nest.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": [
+    "src",
+    "test",
+    "prisma7.config.ts",
+    "vitest.config.ts",
+    "vitest.e2e.config.ts",
+    "eslint.config.js"
+  ]
+}

@@ -41,7 +41,8 @@ A especificação completa está em `docs/ESPECIFICACAO.md`. O estado do trabalh
 ```
 apps/        mobile (Expo), backoffice (React + Vite)
 services/    api-gateway, identity-service, occurrence-service, municipal-service, notification-service
-packages/    shared (tipos, enums, máquina de estados, contratos de eventos), config (eslint, tsconfig, prettier)
+packages/    shared (tipos, enums, máquina de estados, contratos de eventos), config (eslint, tsconfig, prettier),
+             service-kit (NestJS partilhado: erros, auth JWT/RBAC, eventos, Swagger, config)
 analytics/   generator, export, notebooks, databricks.yml
 infra/       postgres/init, geo, caddy, keys
 scripts/     gerar-chaves.sh, verificar.sh, seed
@@ -65,7 +66,22 @@ cp .env.example .env         # primeira vez; muda as palavras-passe
 sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commit)
 docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
 docker compose down          # parar (acrescenta -v para apagar os dados)
+docker compose up -d --build --wait identity-service   # serviço em Docker (migra ao arrancar)
+
+# identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
+pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
+pnpm --filter identity-service build && pnpm --filter identity-service seed   # contas de demo
+pnpm --filter identity-service dev             # API em :3001 (PORT), Swagger em /docs
+pnpm --filter identity-service test:e2e        # e2e com Testcontainers (Docker a correr)
+pnpm --filter identity-service openapi:export  # escreve docs/api/identity-service.json
 ```
+
+Prisma: o schema está em `services/<serviço>/prisma/schema.prisma`. Para criar uma migração nova sem
+shadow database: `pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`
+para uma pasta nova em `prisma/migrations/`. O cliente é gerado em `src/generated` (ignorado pelo git).
+
+Os scripts de instalação de dependências estão bloqueados por omissão; os aprovados estão em
+`allowBuilds` no `pnpm-workspace.yaml`.
 
 URLs locais: RabbitMQ UI http://localhost:15672 · consola do storage http://localhost:9001 (9011 no
 PC do Rodrigo) · Mailpit http://localhost:8025 · PostgreSQL localhost:5432.
