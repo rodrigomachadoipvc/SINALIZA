@@ -66,7 +66,7 @@ cp .env.example .env         # primeira vez; muda as palavras-passe
 sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commit)
 docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
 docker compose down          # parar (acrescenta -v para apagar os dados)
-docker compose up -d --build --wait identity-service municipal-service occurrence-service   # serviços (migram ao arrancar)
+docker compose up -d --build --wait identity-service municipal-service occurrence-service notification-service   # serviços (migram ao arrancar)
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
@@ -75,10 +75,11 @@ pnpm --filter identity-service dev             # API em :3001 (PORT), Swagger em
 pnpm --filter identity-service test:e2e        # e2e com Testcontainers (Docker a correr)
 pnpm --filter identity-service openapi:export  # escreve docs/api/identity-service.json
 # O mesmo para municipal-service (porta local 3002; carrega categorias e limite ao arrancar)
-# e occurrence-service (porta local 3003; precisa do municipal-service e do storage a correr).
+# e occurrence-service (porta local 3003; precisa do municipal-service e do storage a correr)
+# e notification-service (porta local 3004; envia para o Mailpit em localhost:1025).
 ```
 
-Portas locais dos serviços fora do Docker: identity 3001, municipal 3002, occurrence 3003 (dentro do Docker todos
+Portas locais dos serviços fora do Docker: identity 3001, municipal 3002, occurrence 3003, notification 3004 (dentro do Docker todos
 usam 3000 e não publicam portas). Rotas `/internal/*` (`@Internal()`) são só para chamadas entre
 serviços, com o cabeçalho `x-internal-token`.
 
@@ -98,6 +99,11 @@ occurrence-service: as funções PostGIS usam SQL bruto (`$queryRaw`); `lat`/`ln
 partir de `location` (só leitura). A vista `occurrence_facts` alimenta o dashboard. O limite do concelho
 é copiado do municipal-service para `boundary_cache` no arranque. O reverse geocoding usa o Nominatim
 com o User-Agent do projeto (nunca um email pessoal) e 1 pedido/s.
+
+notification-service: sem base de dados e sem rotas de utilizador (só `/health`). Consome a fila
+`notification.emails` (quorum); falhas de SMTP vão para `notification.emails.retry.<n>ms` e, depois da
+3.ª tentativa, para `notification.emails.dlq` (ver no RabbitMQ UI). Templates em
+`src/email/templates.ts` (HTML + texto, tudo escapado).
 
 ## Convenções de código
 

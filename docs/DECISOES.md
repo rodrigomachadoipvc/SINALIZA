@@ -196,3 +196,34 @@ resolução pela **data de resolução**; dias no calendário de Lisboa. Os _hot
 0,005° (~500 m) em vez de H3, porque o H3 não existe no PostgreSQL sem extensões extra; o
 Databricks (F10) usará H3. Por omissão o período é o mês atual e os 11 anteriores; o máximo é 5 anos.
 A fonte `databricks` entra na F10, atrás da mesma interface `StatsProvider`.
+
+## D21 — Retries com filas de atraso e DLQ
+
+**Data:** 2026-10-30 · **Fase:** F5
+
+O RabbitMQ não tem atrasos nativos sem um plugin. Cada tentativa falhada é republicada numa fila de
+atraso (`notification.emails.retry.<n>ms`, com `x-message-ttl`) que, quando o tempo expira, devolve
+a mensagem à fila principal através do _dead-letter_ para a exchange por omissão. O número da
+tentativa vai no cabeçalho `x-attempt`. Por omissão há 3 tentativas (atrasos de 5 s e 30 s,
+configuráveis em `NOTIFICATION_RETRY_DELAYS_MS`). Depois da última, a mensagem vai para
+`notification.emails.dlq` com o erro em `x-last-error`. Mensagens ilegíveis vão logo para a DLQ.
+O nome de cada fila de atraso inclui o atraso porque os argumentos de uma fila não podem mudar.
+Rejeitámos o plugin `rabbitmq_delayed_message_exchange`, porque não vem na imagem oficial.
+
+## D22 — Idempotência em memória e entrega «pelo menos uma vez»
+
+**Data:** 2026-10-30 · **Fase:** F5
+
+Como pede a especificação, os `eventId` tratados ficam numa LRU em memória (10 000 entradas), e os que estão a ser tratados num mapa à
+parte, para que uma entrega repetida em paralelo espere pela primeira em vez de enviar outro email.
+A mensagem só é confirmada (`ack`) depois de o email ser aceite pelo SMTP. Um reinício entre o
+envio e o `ack` pode gerar um email repetido; para um email é um risco aceitável. Uma tabela persistente exigiria dar uma base de dados a este serviço,
+que a especificação diz não ter.
+
+## D23 — Serviços sem rotas de utilizador não recebem a chave pública
+
+**Data:** 2026-10-30 · **Fase:** F5
+
+`coreProviders(null)` cria a guarda global sem verificador de JWT: só as rotas `@Public()` (aqui,
+`/health`) respondem e todas as outras devolvem 401. Assim o notification-service não precisa da
+chave pública do JWT nem de a montar no contentor.

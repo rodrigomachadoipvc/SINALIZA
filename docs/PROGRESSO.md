@@ -21,7 +21,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
       estatísticas via Postgres, eventos)
   - Critério: e2e de ocorrências passam ✅ (29 testes e2e com PostGIS, RabbitMQ e RustFS reais +
     20 unitários); contentor _healthy_ no compose, teste de fumo com o municipal e o Nominatim reais
-- [ ] **F5** — notification-service (consumidores, templates, retries, DLQ)
+- [x] **F5** — notification-service (consumidores, templates, retries, DLQ)
+  - Critério: os emails aparecem no Mailpit ✅ (registo → boas-vindas, ocorrência → confirmação,
+    rejeição → email com a fundamentação, no compose); 6 testes e2e com RabbitMQ e Mailpit reais
+    (retries, DLQ, duplicados, mensagens ilegíveis) + 12 unitários
 - [ ] **F6** — api-gateway (proxy, JWT, RBAC, CORS, rate limit, docs agregadas)
 - [ ] **F7** — Seed completo + `scripts/verificar.sh`
 - [ ] **F8** — Backoffice completo
@@ -65,6 +68,11 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   (categoria + limite, com `x-internal-token`), `boundary_cache`, Nominatim (cache + 1 pedido/s +
   recurso às coordenadas) e storage S3 (URLs pré-assinados com `S3_PUBLIC_ENDPOINT`). Estatísticas
   pela interface `StatsProvider` (só `postgres` por agora; ver D20). Decisões D16–D20.
-- Próximo passo: F5 (notification-service). Consome `user.registered`,
-  `user.password_reset_requested`, `occurrence.created` e `occurrence.status_changed` da exchange
-  `sinaliza.events`; idempotência por `eventId` (ver D16).
+- F5: `notification-service` (porta local 3004), sem BD e sem chave JWT (D23). Fila quorum
+  `notification.emails` ligada aos 4 tipos de evento; retries por filas de atraso e DLQ (D21);
+  idempotência por LRU de `eventId` (D22). Nodemailer com SMTP do `.env` (Mailpit por omissão).
+  Templates em `src/email/templates.ts`. Os e2e usam um proxy TCP à frente do Mailpit para simular
+  falhas de SMTP.
+- Próximo passo: F6 (api-gateway): único ponto de entrada, verifica o JWT, envia os cabeçalhos
+  `x-user-*` e `x-request-id`, CORS, rate limit, nunca encaminha `/internal`, Swagger com seletor
+  dos specs de `docs/api/`.
