@@ -156,3 +156,35 @@ describe('AuthGuard (RBAC)', () => {
     expect(res.headers['x-request-id']).toBe(res.body.requestId);
   });
 });
+
+describe('AuthGuard without a verifier', () => {
+  let app: INestApplication;
+  let token: string;
+
+  beforeAll(async () => {
+    token = await (await JwtSigner.fromPem(privateKey, '15m')).sign(users.ADMIN);
+    const moduleRef = await Test.createTestingModule({
+      controllers: [ProbeController],
+      providers: coreProviders(null),
+    }).compile();
+    app = moduleRef.createNestApplication();
+    configureApp(app, { title: 'probe', description: 'probe' });
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('serves public routes and refuses every authenticated or internal one', async () => {
+    await request(app.getHttpServer()).get('/public').expect(HttpStatus.OK);
+    await request(app.getHttpServer())
+      .get('/me')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+    await request(app.getHttpServer())
+      .get('/internal/probe')
+      .set('x-internal-token', 'anything')
+      .expect(HttpStatus.UNAUTHORIZED);
+  });
+});

@@ -21,12 +21,14 @@ function sameSecret(a: string, b: string): boolean {
 /**
  * Global guard. The gateway already validated the token, but every service verifies it again
  * (defence in depth) and checks that the forwarded `x-user-id` header matches the token.
+ * A service without user routes (notification-service) passes no verifier: only `@Public()`
+ * and `@Internal()` routes are then reachable.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @Inject(JWT_VERIFIER) private readonly verifier: JwtVerifier,
+    @Inject(JWT_VERIFIER) private readonly verifier: JwtVerifier | null,
     @Inject(INTERNAL_TOKEN) private readonly internalToken: string | null,
   ) {}
 
@@ -50,7 +52,7 @@ export class AuthGuard implements CanActivate {
       throw unauthorized('Precisa de iniciar sessão para continuar.');
     }
 
-    const user = await this.verifier.verify(token);
+    const user = this.verifier ? await this.verifier.verify(token) : null;
     if (!user) throw unauthorized('Sessão inválida ou expirada. Inicie sessão novamente.');
 
     const forwardedId = req.header(UserHeaders.ID);

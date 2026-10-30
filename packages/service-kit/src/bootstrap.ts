@@ -10,9 +10,10 @@ import { createValidationPipe } from './http/validation.js';
 
 /**
  * Providers every service registers in its root module: global auth guard and error filter.
- * `internalToken` enables `@Internal()` routes (service-to-service calls).
+ * `verifier` is null for services that expose no user routes; `internalToken` enables
+ * `@Internal()` routes (service-to-service calls).
  */
-export function coreProviders(verifier: JwtVerifier, internalToken?: string): Provider[] {
+export function coreProviders(verifier: JwtVerifier | null, internalToken?: string): Provider[] {
   return [
     { provide: JWT_VERIFIER, useValue: verifier },
     { provide: INTERNAL_TOKEN, useValue: internalToken ?? null },
