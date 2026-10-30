@@ -1,0 +1,32 @@
+{
+  "name": "@sinaliza/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared ESLint, TypeScript and Prettier configuration",
+  "exports": {
+    "./eslint": "./eslint.config.js",
+    "./prettier": "./prettier.config.js",
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.node.json": "./tsconfig.node.json"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "echo \"no TypeScript sources\"",
+    "test": "echo \"no tests\""
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "typescript-eslint": "8.72.1"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0",
+    "typescript": "^6.0.0"
+  },
+  "devDependencies": {
+    "eslint": "10.13.0",
+    "typescript": "6.0.3"
+  }
+}

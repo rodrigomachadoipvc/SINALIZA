@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist
+coverage
+.expo
+docs/api/*.json
+infra/geo/*.geojson

@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Expo
+.expo/
+web-build/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+infra/keys/*.pem
+!infra/keys/.gitkeep
+
+# Python / analytics
+__pycache__/
+.venv/
+analytics/**/output/
+*.parquet
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
