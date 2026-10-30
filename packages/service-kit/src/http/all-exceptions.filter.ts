@@ -17,6 +17,7 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   401: 'Sessão inválida ou expirada. Inicie sessão novamente.',
   403: 'Não tem permissão para realizar esta ação.',
   404: 'O recurso pedido não existe.',
+  405: 'Este método não é suportado neste endereço.',
   409: 'O pedido entra em conflito com o estado atual.',
   413: 'O ficheiro é demasiado grande.',
   415: 'O tipo de ficheiro não é suportado.',
@@ -25,6 +26,7 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   500: 'Ocorreu um erro inesperado. Tente novamente mais tarde.',
   502: 'Um serviço interno não respondeu corretamente. Tente novamente mais tarde.',
   503: 'O serviço está temporariamente indisponível. Tente novamente mais tarde.',
+  504: 'O serviço demorou demasiado a responder. Tente novamente.',
 };
 
 const ERROR_NAMES: Record<number, string> = {
@@ -32,6 +34,7 @@ const ERROR_NAMES: Record<number, string> = {
   401: 'Unauthorized',
   403: 'Forbidden',
   404: 'Not Found',
+  405: 'Method Not Allowed',
   409: 'Conflict',
   413: 'Payload Too Large',
   415: 'Unsupported Media Type',
@@ -40,6 +43,7 @@ const ERROR_NAMES: Record<number, string> = {
   500: 'Internal Server Error',
   502: 'Bad Gateway',
   503: 'Service Unavailable',
+  504: 'Gateway Timeout',
 };
 
 /**
