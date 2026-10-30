@@ -45,7 +45,8 @@ packages/    shared (tipos, enums, máquina de estados, contratos de eventos), c
              service-kit (NestJS partilhado: erros, auth JWT/RBAC, eventos, Swagger, config)
 analytics/   generator, export, notebooks, databricks.yml
 infra/       postgres/init, geo, caddy, keys
-scripts/     gerar-chaves.sh, verificar.sh, seed
+scripts/     gerar-chaves.sh, verificar.sh
+tests/       system (testes de requisitos contra a stack real, usados pelo verificar.sh)
 docs/        ESPECIFICACAO, PROGRESSO, DECISOES, ARQUITETURA, DEPLOY, api/
 ```
 
@@ -67,6 +68,11 @@ sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commi
 docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
 docker compose down          # parar (acrescenta -v para apagar os dados)
 docker compose up -d --build --wait   # tudo: infraestrutura, 4 serviços e gateway (API em http://localhost:8080/api, Swagger em /docs)
+pnpm seed                    # contas + 45 ocorrências de demonstração (idempotente; corre dentro dos contentores)
+sh scripts/verificar.sh      # sobe tudo, seed, testes de requisitos → tabela ✅/❌ RF01–RF20
+sh scripts/verificar.sh --sem-build   # sem reconstruir imagens; --completo junta lint, typecheck e pnpm test
+pnpm test:system             # só os testes de requisitos (tests/system; precisa da stack a correr)
+pnpm --filter @sinaliza/system-tests cleanup   # apaga restos de testes interrompidos
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
@@ -105,6 +111,11 @@ notification-service: sem base de dados e sem rotas de utilizador (só `/health`
 `notification.emails` (quorum); falhas de SMTP vão para `notification.emails.retry.<n>ms` e, depois da
 3.ª tentativa, para `notification.emails.dlq` (ver no RabbitMQ UI). Templates em
 `src/email/templates.ts` (HTML + texto, tudo escapado).
+
+Seed: as contas estão em `services/identity-service/src/seed.ts`; as ocorrências em
+`services/occurrence-service/src/seed/demo-data.ts` (dados puros, com testes) e são escritas
+diretamente na `occurrence_db`, com utilizadores e categorias lidos pelo gateway (D28). Os testes de
+sistema usam contas `@verificar.sinaliza.test` e apagam tudo o que criam (D29).
 
 api-gateway: as rotas públicas estão numa lista explícita em `src/routing/routes.ts` (método, caminho,
 serviço, acesso). O que não está na lista dá 404 e nunca chega a um serviço. **Quando um serviço ganha

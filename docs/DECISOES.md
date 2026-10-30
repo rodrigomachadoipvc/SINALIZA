@@ -272,3 +272,49 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
   as operações que o gateway expõe. O arranque do Swagger UI está num ficheiro `.js` e não em
   _script inline_, para a CSP do `helmet` ficar estrita. O spec do notification-service não tem
   operações públicas; aparece no seletor porque a especificação pede os quatro.
+
+## D28 — Seed das ocorrências direto na base, com utilizadores e categorias lidos pela API
+
+**Data:** 2026-10-30 · **Fase:** F7
+
+- As ocorrências de demonstração precisam de datas, referências e históricos fixos (as da Maria
+  iguais às do protótipo). A API não permite criar ocorrências no passado nem escolher a
+  referência, por isso o seed do occurrence-service escreve diretamente na `occurrence_db`. Não
+  publica eventos, por isso o seed não envia emails.
+- Os autores e as categorias pertencem a outros serviços. Para não dar ao seed acesso às bases
+  `identity_db` e `municipal_db` (RNF07), o seed lê-os pelo gateway, com o login do administrador
+  de demonstração (`SEED_API_URL`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`).
+- O seed é idempotente: os ids derivam da referência (UUID v5 sobre SHA-1). Uma referência já usada
+  por outra ocorrência é ignorada e listada. O contador de 2026 passa para pelo menos 482, por isso
+  a próxima ocorrência real recebe a SIN-2026-00483.
+- O seed valida que todos os pontos estão dentro do limite em cache (`ST_Contains`) antes de
+  escrever. Um teste unitário faz a mesma verificação contra `infra/geo/barcelos.geojson`.
+- Os 10 cidadãos extra usam endereços `@example.com` (domínio reservado, RFC 2606), para que nenhum
+  email chegue a uma caixa real se o SMTP da cloud estiver configurado. A conta da Maria mantém o
+  endereço da especificação.
+- `pnpm seed` corre os dois seeds **dentro dos contentores** (`docker compose exec`), por isso não
+  precisa de compilar nada no anfitrião. Cada serviço mantém um script `seed` para correr fora do
+  Docker.
+- Alternativa rejeitada: criar as ocorrências pela API e mudar os estados como gestor. Era mais
+  fiel ao fluxo real, mas todas as datas ficariam iguais ao momento do seed (o dashboard mensal
+  ficaria vazio) e o seed enviaria dezenas de emails.
+
+## D29 — `verificar.sh` corre testes de requisitos contra a stack real
+
+**Data:** 2026-10-30 · **Fase:** F7
+
+- Novo pacote `tests/system` (Vitest), fora de `pnpm test`, porque precisa da stack a correr.
+  Cada teste começa pelo requisito que cobre (`RF01 · …`). O `summary.ts` agrupa o relatório JSON
+  do Vitest numa tabela ✅/❌ de RF01 a RF20, mais uma linha para os dados de demonstração.
+- Os testes usam só o gateway em :8080 e a API do Mailpit, como faria um cliente. As contas que
+  criam usam o domínio `verificar.sinaliza.test`, e as categorias o prefixo «Verificação ». No fim,
+  `cleanup.ts` apaga essas contas e o que delas depende (ocorrências, fotografias no bucket,
+  emails). Para isso usa o superutilizador do PostgreSQL do `.env`, porque é uma ferramenta de
+  teste e não um serviço. `SINALIZA_KEEP_TEST_DATA=1` mantém os dados para inspeção.
+- O login tem um limite de 10 pedidos por minuto por IP. Os testes respeitam o `Retry-After` e
+  repetem o pedido uma vez, por isso o script pode ser corrido duas vezes seguidas.
+- Por omissão, `verificar.sh` não corre os e2e com Testcontainers dos pacotes, que demoram vários
+  minutos e já correm em `pnpm test`. A opção `--completo` acrescenta lint, typecheck e `pnpm test`.
+- O passo «rever antes de submeter» do RF19 e os ecrãs são das apps (F8/F9), que terão os seus
+  próprios testes. Aqui o RF19 verifica a referência devolvida e que o detalhe coincide com o que
+  foi submetido.

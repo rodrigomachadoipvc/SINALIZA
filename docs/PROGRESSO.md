@@ -30,7 +30,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     rotas das 4 áreas, erros 400/403/404/409/422, fotografia pré-assinada, emails no Mailpit,
     Swagger agregado no browser); 16 testes e2e + 6 unitários (a lista de rotas é comparada com
     os specs OpenAPI)
-- [ ] **F7** — Seed completo + `scripts/verificar.sh`
+- [x] **F7** — Seed completo + `scripts/verificar.sh`
+  - Critério: resumo com tudo ✅ (21/21: dados de demonstração + RF01–RF20, contra o compose via
+    :8080); seed idempotente (45 novas, depois 0 novas); 8 testes unitários dos dados + 5 e2e do
+    seed com PostGIS real
 - [ ] **F8** — Backoffice completo
 - [ ] **F9** — App mobile completa
 - [ ] **F10** — Analytics/Databricks (gerador, export, notebooks, bundle, fonte `databricks`)
@@ -81,6 +84,11 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   Lista explícita de rotas com RBAC (`src/routing/routes.ts`, D24), cabeçalhos limpos e reescritos
   (D25), corpos em _stream_ (D26), helmet, CORS (`CORS_ORIGINS`), rate limit e Swagger agregado em
   `/docs` (D27). `docker compose up -d --build --wait` arranca agora tudo.
-- Próximo passo: F7 (seed completo + `scripts/verificar.sh`): as ocorrências da Maria iguais às do
-  protótipo, ~40 de outros cidadãos, `pnpm seed` idempotente; o script sobe o compose, corre o seed
-  e os e2e e imprime ✅/❌ por requisito (RF01–RF20).
+- F7: `pnpm seed` (raiz) corre o seed do identity-service (3 contas da especificação + 10 cidadãos
+  `@example.com`) e o do occurrence-service (as 4 ocorrências da Maria iguais às do protótipo e 41 de
+  outros cidadãos pelo concelho, com históricos coerentes com a máquina de estados; D28).
+  `scripts/verificar.sh` sobe o compose, corre o seed e os testes de `tests/system` e imprime a
+  tabela ✅/❌ (D29).
+- Próximo passo: F8 (backoffice React + Vite): login, lista/pesquisa/filtros, detalhe com ações de
+  estado, mapa, dashboard, gestão de categorias e de gestores; testes com Testing Library e smoke
+  test; servido por nginx em :8081 no compose.
