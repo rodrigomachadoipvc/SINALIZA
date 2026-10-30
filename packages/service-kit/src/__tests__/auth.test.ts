@@ -8,7 +8,7 @@ import { UserRole } from '@sinaliza/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { CurrentUser, Public, Roles } from '../auth/decorators.js';
+import { CurrentUser, Internal, Public, Roles } from '../auth/decorators.js';
 import { JwtSigner, JwtVerifier } from '../auth/jwt.js';
 import { configureApp, coreProviders } from '../bootstrap.js';
 import type { AuthUser } from '../http/request-context.js';
@@ -43,6 +43,12 @@ class ProbeController {
   admin(): { ok: true } {
     return { ok: true };
   }
+
+  @Internal()
+  @Get('internal/probe')
+  internal(): { ok: true } {
+    return { ok: true };
+  }
 }
 
 const users: Record<UserRole, AuthUser> = {
@@ -61,7 +67,7 @@ describe('AuthGuard (RBAC)', () => {
 
     const moduleRef = await Test.createTestingModule({
       controllers: [ProbeController],
-      providers: coreProviders(await JwtVerifier.fromPem(publicKey)),
+      providers: coreProviders(await JwtVerifier.fromPem(publicKey), 'internal-secret'),
     }).compile();
     app = moduleRef.createNestApplication();
     configureApp(app, { title: 'probe', description: 'probe' });
@@ -76,6 +82,18 @@ describe('AuthGuard (RBAC)', () => {
     const req = request(app.getHttpServer()).get(path);
     return role ? req.set('Authorization', `Bearer ${tokens[role]}`) : req;
   };
+
+  describe('internal routes', () => {
+    it('accept the shared secret', async () => {
+      await get('/internal/probe').set('x-internal-token', 'internal-secret').expect(200);
+    });
+
+    it('reject a wrong secret, no secret, or a user token', async () => {
+      await get('/internal/probe').set('x-internal-token', 'wrong').expect(401);
+      await get('/internal/probe').expect(401);
+      await get('/internal/probe', UserRole.ADMIN).expect(401);
+    });
+  });
 
   it('lets anyone reach public routes', async () => {
     await get('/public').expect(200);

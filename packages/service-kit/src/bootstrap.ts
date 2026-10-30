@@ -2,16 +2,20 @@ import { type INestApplication, Logger, type Provider } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
-import { AuthGuard, JWT_VERIFIER } from './auth/auth.guard.js';
+import { AuthGuard, INTERNAL_TOKEN, JWT_VERIFIER } from './auth/auth.guard.js';
 import { JwtVerifier } from './auth/jwt.js';
 import { AllExceptionsFilter } from './http/all-exceptions.filter.js';
 import { requestIdMiddleware } from './http/request-id.middleware.js';
 import { createValidationPipe } from './http/validation.js';
 
-/** Providers every service registers in its root module: global auth guard and error filter. */
-export function coreProviders(verifier: JwtVerifier): Provider[] {
+/**
+ * Providers every service registers in its root module: global auth guard and error filter.
+ * `internalToken` enables `@Internal()` routes (service-to-service calls).
+ */
+export function coreProviders(verifier: JwtVerifier, internalToken?: string): Provider[] {
   return [
     { provide: JWT_VERIFIER, useValue: verifier },
+    { provide: INTERNAL_TOKEN, useValue: internalToken ?? null },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ];

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { CATEGORY_ICONS, DEFAULT_CATEGORIES, slugify } from '../categories.js';
 import { createEvent, EventType, isEventEnvelope } from '../events.js';
 import { CITIZEN_STATUS_GROUPS, OccurrenceStatus as S } from '../occurrence-status.js';
 import { isValidPassword } from '../password.js';
@@ -86,5 +87,23 @@ describe('events', () => {
     expect(
       isEventEnvelope({ eventId: 'e', type: 'unknown', occurredAt: 'x', version: 1, payload: {} }),
     ).toBe(false);
+  });
+});
+
+describe('slugify', () => {
+  it.each([
+    ['Iluminação pública', 'iluminacao-publica'],
+    ['  Vias & Pavimento!  ', 'vias-pavimento'],
+    ['Árvores caídas', 'arvores-caidas'],
+  ])('%s → %s', (input, expected) => {
+    expect(slugify(input)).toBe(expected);
+  });
+});
+
+describe('DEFAULT_CATEGORIES', () => {
+  it('only uses icons from CATEGORY_ICONS', () => {
+    for (const c of DEFAULT_CATEGORIES) {
+      expect(CATEGORY_ICONS).toContain(c.icon);
+    }
   });
 });
