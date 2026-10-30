@@ -1,0 +1,105 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OccurrenceStatus {
+  RECEBIDA
+  EM_ANALISE
+  EM_RESOLUCAO
+  RESOLVIDA
+  REJEITADA
+  DUPLICADA
+  ANULADA
+
+  @@map("occurrence_status")
+}
+
+enum UserRole {
+  CIDADAO
+  GESTOR
+  ADMIN
+
+  @@map("user_role")
+}
+
+model Occurrence {
+  id              String           @id @db.Uuid
+  /// SIN-YYYY-NNNNN, sequential per year (reference_counters).
+  reference       String           @unique @db.VarChar(20)
+  /// Snapshot of the reporting citizen, used for notifications. Never exposed on the public map.
+  citizenId       String           @map("citizen_id") @db.Uuid
+  citizenName     String           @map("citizen_name") @db.VarChar(120)
+  citizenEmail    String           @map("citizen_email") @db.VarChar(254)
+  /// Snapshot of the category at the time it was set (the municipal-service owns categories).
+  categoryId      String           @map("category_id") @db.Uuid
+  categoryName    String           @map("category_name") @db.VarChar(80)
+  categorySlug    String           @map("category_slug") @db.VarChar(60)
+  description     String           @db.VarChar(500)
+  status          OccurrenceStatus @default(RECEBIDA)
+  location        Unsupported("geography(Point, 4326)")
+  /// Generated from `location` (see migration); read-only for the application.
+  lat             Float
+  /// Generated from `location` (see migration); read-only for the application.
+  lng             Float
+  address         String           @db.VarChar(300)
+  photoKey        String?          @map("photo_key") @db.VarChar(200)
+  originalId      String?          @map("original_id") @db.Uuid
+  rejectionReason String?          @map("rejection_reason") @db.VarChar(1000)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  resolvedAt      DateTime?        @map("resolved_at") @db.Timestamptz(3)
+  cancelledAt     DateTime?        @map("cancelled_at") @db.Timestamptz(3)
+
+  original   Occurrence?     @relation("Duplicates", fields: [originalId], references: [id])
+  duplicates Occurrence[]    @relation("Duplicates")
+  history    StatusHistory[]
+
+  @@index([location], type: Gist)
+  @@index([citizenId, createdAt])
+  @@index([status])
+  @@index([categorySlug])
+  @@index([createdAt])
+  @@map("occurrences")
+}
+
+model StatusHistory {
+  id            String            @id @default(uuid()) @db.Uuid
+  occurrenceId  String            @map("occurrence_id") @db.Uuid
+  /// Null for the first entry (creation).
+  fromStatus    OccurrenceStatus? @map("from_status")
+  toStatus      OccurrenceStatus  @map("to_status")
+  note          String?           @db.VarChar(1000)
+  reason        String?           @db.VarChar(1000)
+  changedBy     String            @map("changed_by") @db.Uuid
+  changedByRole UserRole          @map("changed_by_role")
+  changedAt     DateTime          @default(now()) @map("changed_at") @db.Timestamptz(3)
+
+  occurrence Occurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+
+  @@index([occurrenceId, changedAt])
+  @@map("status_history")
+}
+
+model ReferenceCounter {
+  year      Int @id
+  lastValue Int @map("last_value")
+
+  @@map("reference_counters")
+}
+
+/// Local copy of the municipality boundary (from the municipal-service), for ST_Contains.
+model BoundaryCache {
+  name      String                                   @id @db.VarChar(120)
+  boundary  Unsupported("geometry(MultiPolygon, 4326)")
+  fetchedAt DateTime                                 @default(now()) @map("fetched_at") @db.Timestamptz(3)
+
+  @@index([boundary], type: Gist)
+  @@map("boundary_cache")
+}
