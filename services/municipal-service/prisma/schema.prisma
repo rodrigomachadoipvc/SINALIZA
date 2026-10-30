@@ -1,0 +1,36 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Stable identifier used by filters and the analytics pipeline; never changes after creation.
+  slug      String   @unique @db.VarChar(60)
+  /// Unique ignoring case (index on lower(name) in the migration).
+  name      String   @unique @db.VarChar(80)
+  /// Lucide icon name (see CATEGORY_ICONS in @sinaliza/shared).
+  icon      String   @db.VarChar(40)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("categories")
+}
+
+model Municipality {
+  id        String                                  @id @default(uuid()) @db.Uuid
+  name      String                                  @unique @db.VarChar(120)
+  boundary  Unsupported("geometry(MultiPolygon, 4326)")
+  createdAt DateTime                                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime                                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([boundary], type: Gist)
+  @@map("municipality")
+}

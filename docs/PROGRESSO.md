@@ -14,7 +14,9 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
 - [x] **F2** — identity-service (auth, utilizadores, eventos, Swagger, testes)
   - Critério: e2e de auth passam ✅ (30 testes e2e com Testcontainers + 4 unitários); contentor
     _healthy_ no compose, aplica as migrações ao arrancar
-- [ ] **F3** — municipal-service (categorias, município + limite de Barcelos)
+- [x] **F3** — municipal-service (categorias, município + limite de Barcelos)
+  - Critério: seed e endpoints funcionam ✅ (20 testes e2e + 8 unitários; contentor _healthy_,
+    chamada interna verificada a partir de outro contentor)
 - [ ] **F4** — occurrence-service (ocorrências, máquina de estados, PostGIS, MinIO, Nominatim, mapa,
       estatísticas via Postgres, eventos)
 - [ ] **F5** — notification-service (consumidores, templates, retries, DLQ)
@@ -48,4 +50,11 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
 - Padrão para os próximos serviços: copiar a estrutura do identity-service (`app.ts` com
   `createApp`, `AppModule.forRoot(config)`, `config.ts`, `test/harness.ts`, Dockerfile multi-stage
   com `pnpm deploy`, porta 3000 dentro do contentor, sem portas publicadas).
-- Próximo passo: F3 (municipal-service).
+- F3: `municipal-service` com categorias (seed das 6 por omissão em cada arranque, slug estável,
+  nome único sem distinguir maiúsculas, ícone validado contra `CATEGORY_ICONS` do `shared`) e
+  município (limite real do OSM em `infra/geo/barcelos.geojson`, carregado em cada arranque).
+  Rotas internas para o occurrence-service: `GET /internal/categories/:id` e
+  `GET /internal/municipality`, com `x-internal-token` (`INTERNAL_API_TOKEN`; ver D13). O
+  service-kit ganhou o decorador `@Internal()`.
+- Próximo passo: F4 (occurrence-service). Vai chamar o municipal-service em
+  `http://municipal-service:3000/internal/...` (local: `http://localhost:3002`).

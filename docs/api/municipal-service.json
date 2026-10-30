@@ -1,0 +1,482 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Estado do serviço (usado pelo healthcheck do Docker)",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/categories": {
+      "get": {
+        "description": "O cidadão vê só as ativas; gestores e administradores veem todas com `?all=true`.",
+        "operationId": "CategoriesController_list",
+        "parameters": [
+          {
+            "name": "all",
+            "required": false,
+            "in": "query",
+            "description": "Só para gestores e administradores: inclui as categorias desativadas.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar categorias",
+        "tags": [
+          "categories"
+        ]
+      },
+      "post": {
+        "operationId": "CategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já existe uma categoria com este nome."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Criar categoria (ADMIN, RF10)",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/categories/{id}": {
+      "patch": {
+        "operationId": "CategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Editar nome ou ícone (ADMIN, RF10); o slug não muda",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/categories/{id}/deactivate": {
+      "post": {
+        "operationId": "CategoriesController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Desativar categoria (ADMIN); deixa de aparecer ao cidadão",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/categories/{id}/activate": {
+      "post": {
+        "operationId": "CategoriesController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reativar categoria (ADMIN)",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/municipality": {
+      "get": {
+        "operationId": "MunicipalityController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MunicipalityDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Nome e limite do concelho (RF11, RF12)",
+        "tags": [
+          "municipality"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Sinaliza · municipal-service",
+    "description": "Categorias de ocorrências e limite do concelho de Barcelos.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "example": "iluminacao"
+          },
+          "name": {
+            "type": "string",
+            "example": "Iluminação pública"
+          },
+          "icon": {
+            "type": "string",
+            "enum": [
+              "accessibility",
+              "baby",
+              "bike",
+              "building-2",
+              "bus",
+              "car",
+              "construction",
+              "dog",
+              "droplets",
+              "ellipsis",
+              "fence",
+              "flame",
+              "footprints",
+              "hammer",
+              "leaf",
+              "lightbulb",
+              "map-pin",
+              "paint-bucket",
+              "recycle",
+              "school",
+              "shield-alert",
+              "signpost",
+              "sprout",
+              "traffic-cone",
+              "trash-2",
+              "tree-pine",
+              "triangle-alert",
+              "volume-2",
+              "waves",
+              "wind",
+              "wrench",
+              "zap"
+            ],
+            "example": "lightbulb",
+            "description": "Nome do ícone Lucide."
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "icon",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Espaços verdes",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "icon": {
+            "type": "string",
+            "enum": [
+              "accessibility",
+              "baby",
+              "bike",
+              "building-2",
+              "bus",
+              "car",
+              "construction",
+              "dog",
+              "droplets",
+              "ellipsis",
+              "fence",
+              "flame",
+              "footprints",
+              "hammer",
+              "leaf",
+              "lightbulb",
+              "map-pin",
+              "paint-bucket",
+              "recycle",
+              "school",
+              "shield-alert",
+              "signpost",
+              "sprout",
+              "traffic-cone",
+              "trash-2",
+              "tree-pine",
+              "triangle-alert",
+              "volume-2",
+              "waves",
+              "wind",
+              "wrench",
+              "zap"
+            ],
+            "example": "tree-pine"
+          }
+        },
+        "required": [
+          "name",
+          "icon"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Espaços verdes",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "icon": {
+            "type": "string",
+            "enum": [
+              "accessibility",
+              "baby",
+              "bike",
+              "building-2",
+              "bus",
+              "car",
+              "construction",
+              "dog",
+              "droplets",
+              "ellipsis",
+              "fence",
+              "flame",
+              "footprints",
+              "hammer",
+              "leaf",
+              "lightbulb",
+              "map-pin",
+              "paint-bucket",
+              "recycle",
+              "school",
+              "shield-alert",
+              "signpost",
+              "sprout",
+              "traffic-cone",
+              "trash-2",
+              "tree-pine",
+              "triangle-alert",
+              "volume-2",
+              "waves",
+              "wind",
+              "wrench",
+              "zap"
+            ]
+          }
+        }
+      },
+      "MunicipalityDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Barcelos"
+          },
+          "boundary": {
+            "type": "object",
+            "description": "Limite do concelho em GeoJSON (MultiPolygon, WGS84 / EPSG:4326).",
+            "example": {
+              "type": "MultiPolygon",
+              "coordinates": [
+                [
+                  [
+                    [
+                      -8.6,
+                      41.5
+                    ],
+                    [
+                      -8.5,
+                      41.5
+                    ],
+                    [
+                      -8.5,
+                      41.6
+                    ],
+                    [
+                      -8.6,
+                      41.5
+                    ]
+                  ]
+                ]
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "boundary"
+        ]
+      }
+    }
+  }
+}

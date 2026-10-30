@@ -143,6 +143,25 @@ services:
         condition: service_healthy
     networks: [backend]
 
+  municipal-service:
+    build:
+      context: .
+      dockerfile: services/municipal-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgis
+      POSTGRES_PORT: '5432'
+      MUNICIPAL_DB_USER: ${MUNICIPAL_DB_USER:?}
+      MUNICIPAL_DB_PASSWORD: ${MUNICIPAL_DB_PASSWORD:?}
+      JWT_PUBLIC_KEY_PATH: /run/keys/jwt-public.pem
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?}
+    volumes:
+      - ./infra/keys/jwt-public.pem:/run/keys/jwt-public.pem:ro
+    depends_on:
+      postgis:
+        condition: service_healthy
+    networks: [backend]
+
 networks:
   backend:
     name: sinaliza-backend

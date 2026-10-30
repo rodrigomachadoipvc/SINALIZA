@@ -116,3 +116,33 @@ Usamos o Prisma 7.10 (estável, `prisma@prev`), com o gerador ESM `prisma-client
 Os testes e2e de cada serviço arrancam o seu próprio PostgreSQL e RabbitMQ com Testcontainers, em
 vez de usarem o `docker compose` de desenvolvimento. Assim os testes não apagam nem dependem dos
 dados locais e podem correr em paralelo com a app. Precisam apenas do Docker a correr.
+
+## D13 — Chamadas internas com segredo partilhado
+
+**Data:** 2026-10-30 · **Fase:** F3
+
+O `occurrence-service` precisa de validar categorias e de obter o limite do concelho, inclusive no
+arranque, quando não há nenhum utilizador autenticado. Por isso o `municipal-service` expõe rotas
+em `/internal/*`, autenticadas pelo cabeçalho `x-internal-token` (variável `INTERNAL_API_TOKEN`,
+comparada em tempo constante), em vez de um JWT de utilizador. Estas rotas não aparecem no Swagger
+público e o gateway nunca encaminha o prefixo `/internal`. Uma alternativa mais forte seria mTLS
+entre serviços; para este projeto, rede Docker interna + segredo partilhado é suficiente.
+
+## D14 — Limite real de Barcelos a partir do OpenStreetMap
+
+**Data:** 2026-10-30 · **Fase:** F3
+
+`infra/geo/barcelos.geojson` é o limite oficial do concelho no OpenStreetMap (relação 3737586,
+`admin_level=7`), obtido pelo Nominatim com `polygon_threshold=0.0005` (204 vértices). Não foi
+preciso o polígono aproximado de recurso. O `municipal-service` carrega o ficheiro na tabela
+`municipality` em cada arranque (insere ou atualiza), com `ST_MakeValid` para garantir um
+MultiPolygon válido. Os testes e2e confirmam pontos dentro (Câmara, Barcelinhos) e fora (Braga,
+Esposende, Viana do Castelo). Dados © colaboradores do OpenStreetMap, licença ODbL.
+
+## D15 — `GET /categories` devolve uma lista, não uma página
+
+**Data:** 2026-10-30 · **Fase:** F3
+
+A regra geral (RNF19) é paginar as listas. As categorias são poucas (seis por omissão) e as apps
+precisam sempre de todas, para os filtros e para o passo 2 do assistente. Paginá-las obrigaria a
+pedidos extra sem benefício, por isso este endpoint devolve um array ordenado pelo nome.
