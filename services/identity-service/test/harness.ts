@@ -94,7 +94,7 @@ export async function startHarness(overrides: Partial<IdentityConfig> = {}): Pro
   const prisma = (await import('../src/generated/prisma/client.js')).PrismaClient;
   const { PrismaPg } = await import('@prisma/adapter-pg');
   const seedClient = new prisma({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
-  await seedUsers(seedClient);
+  await seedUsers(seedClient, { citizens: false });
   await seedClient.$disconnect();
 
   const { app } = await createApp(config, ['error', 'warn']);
