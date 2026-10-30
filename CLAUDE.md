@@ -30,7 +30,7 @@ A especificação completa está em `docs/ESPECIFICACAO.md`. O estado do trabalh
 | ---------- | ----------------------------------------------------------------------------- |
 | Runtime    | Node 24 LTS, pnpm 12 (workspaces), TypeScript 6.0 strict                      |
 | Serviços   | NestJS (ESM), `@nestjs/swagger`, RabbitMQ (AMQP), PostgreSQL 16 + PostGIS 3.4 |
-| Ficheiros  | MinIO (S3) com URLs pré-assinados                                             |
+| Ficheiros  | RustFS (compatível com S3) com URLs pré-assinados                             |
 | Backoffice | React + Vite + Tailwind + TanStack Query + Leaflet + Recharts                 |
 | Mobile     | Expo (Expo Go) + React Native                                                 |
 | Testes     | Vitest (unitários e e2e), Supertest, Testing Library                          |
@@ -60,7 +60,17 @@ pnpm typecheck               # tsc --noEmit em todos os pacotes
 pnpm test                    # testes de todos os pacotes
 pnpm format                  # Prettier
 pnpm --filter @sinaliza/shared test   # testes de um só pacote
+
+cp .env.example .env         # primeira vez; muda as palavras-passe
+sh scripts/gerar-chaves.sh   # chaves RSA do JWT em infra/keys (não fazer commit)
+docker compose up -d --wait  # infraestrutura (postgis, rabbitmq, storage, mailpit)
+docker compose down          # parar (acrescenta -v para apagar os dados)
 ```
+
+URLs locais: RabbitMQ UI http://localhost:15672 · consola do storage http://localhost:9001 (9011 no
+PC do Rodrigo) · Mailpit http://localhost:8025 · PostgreSQL localhost:5432.
+
+O armazenamento de fotografias é RustFS (compatível com S3), não MinIO — ver `docs/DECISOES.md` D05.
 
 ## Convenções de código
 

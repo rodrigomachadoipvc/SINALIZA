@@ -33,3 +33,37 @@ continua a precisar de configuração experimental para ESM. O Vitest tem a mesm
 A máquina de estados é um módulo puro em `packages/shared/src/state-machine.ts`, em vez de viver só
 no `occurrence-service`. Assim o backoffice e a app usam exatamente as mesmas regras para mostrar
 apenas as ações válidas (`allowedTransitions`), e o serviço continua a ser quem as impõe.
+
+## D05 — RustFS em vez de MinIO
+
+**Data:** 2026-10-30 · **Fase:** F1
+
+A especificação pede MinIO. A MinIO deixou de publicar imagens Docker gratuitas: `minio/minio` e
+`minio/mc` já não existem no Docker Hub, e o repositório comunitário foi arquivado. Usar a última
+imagem antiga obrigaria a correr software sem correções de segurança.
+
+Usamos o **RustFS** (`rustfs/rustfs`, Apache 2.0), um armazenamento compatível com S3 pensado como
+substituto direto da MinIO: as mesmas portas (API 9000, consola 9001) e a mesma API S3. O bucket
+`occurrence-photos` é criado por um contentor de _init_ com a AWS CLI (`storage-init`), em vez do
+`minio-mc`. Os serviços falam com o armazenamento através do SDK S3 da AWS e de variáveis `S3_*`,
+por isso trocar de fornecedor (MinIO, RustFS, AWS S3) é só mudar o `.env`.
+
+Alternativas consideradas: SeaweedFS (precisa de quatro contentores: master, volume, filer e s3) e
+Garage (precisa de configurar o _layout_ do cluster antes de usar).
+
+## D06 — PostGIS 3.6 em vez de 3.4
+
+**Data:** 2026-10-30 · **Fase:** F1
+
+A imagem `postgis/postgis:16-3.4` não é atualizada desde outubro de 2024. Mantemos o PostgreSQL 16
+pedido na especificação, mas com a versão do PostGIS que ainda recebe atualizações
+(`postgis/postgis:16-3.6-alpine`). As funções usadas (`ST_Contains`, `geography`, GIST) são as
+mesmas.
+
+## D07 — Portas configuráveis no `.env`
+
+**Data:** 2026-10-30 · **Fase:** F1
+
+Todas as portas publicadas pela infraestrutura vêm do `.env`, com as da especificação por omissão.
+No PC de desenvolvimento do Rodrigo a porta 9001 está ocupada por um serviço do Windows, por isso o
+`.env` local usa `S3_CONSOLE_PORT=9011`.
