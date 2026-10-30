@@ -4,3 +4,5 @@ coverage
 .expo
 docs/api/*.json
 infra/geo/*.geojson
+**/src/generated
+docs/ESPECIFICACAO.md

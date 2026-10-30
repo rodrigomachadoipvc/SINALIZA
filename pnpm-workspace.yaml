@@ -2,3 +2,14 @@ packages:
   - apps/*
   - services/*
   - packages/*
+
+# Dependency install scripts are denied unless reviewed and listed here.
+allowBuilds:
+  '@scarf/scarf': false # telemetry from swagger-ui-dist
+  '@swc/core': false # the native binary comes from an optional platform package
+  argon2: false # ships prebuilt binaries, loaded at runtime by node-gyp-build
+  prisma: true # preinstall only checks the Node.js version
+  '@prisma/engines': true # downloads the schema engine used by `prisma migrate`
+  cpu-features: false # optional native speed-up for ssh2 (Testcontainers)
+  ssh2: false # pure-JS fallback is enough; only used by Testcontainers
+  protobufjs: false # postinstall only checks versions (Testcontainers)

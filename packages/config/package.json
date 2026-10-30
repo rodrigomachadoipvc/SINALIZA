@@ -8,7 +8,8 @@
     "./eslint": "./eslint.config.js",
     "./prettier": "./prettier.config.js",
     "./tsconfig.base.json": "./tsconfig.base.json",
-    "./tsconfig.node.json": "./tsconfig.node.json"
+    "./tsconfig.node.json": "./tsconfig.node.json",
+    "./tsconfig.nest.json": "./tsconfig.nest.json"
   },
   "scripts": {
     "lint": "eslint .",

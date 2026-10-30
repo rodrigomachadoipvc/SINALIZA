@@ -5,7 +5,8 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /**
- * @param {{ tsconfigRootDir?: string }} [options] set tsconfigRootDir to enable type-aware rules.
+ * @param {{ tsconfigRootDir?: string, nest?: boolean }} [options] set tsconfigRootDir to enable
+ *   type-aware rules; set nest for NestJS packages, where `import type` would break DI metadata.
  */
 export function baseConfig(options = {}) {
   const typed = Boolean(options.tsconfigRootDir);
@@ -30,9 +31,21 @@ export function baseConfig(options = {}) {
           'error',
           { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
         ],
-        '@typescript-eslint/consistent-type-imports': 'error',
+        '@typescript-eslint/consistent-type-imports': options.nest ? 'off' : 'error',
+        ...(options.nest ? { '@typescript-eslint/no-extraneous-class': 'off' } : {}),
         eqeqeq: ['error', 'always'],
         'no-console': ['warn', { allow: ['warn', 'error'] }],
+      },
+    },
+    {
+      // Supertest response bodies are `any`; tests assert on them directly.
+      files: ['**/__tests__/**/*.ts', '**/test/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/unbound-method': 'off',
       },
     },
     {
