@@ -112,7 +112,7 @@ services:
       retries: 20
 
   # ------------------------------------------------------------------ services
-  # Internal only: no published ports. The api-gateway (F6) is the single entry point.
+  # Internal only: no published ports. The api-gateway is the single entry point.
 
   identity-service:
     build:
@@ -224,6 +224,36 @@ services:
       rabbitmq:
         condition: service_healthy
       mailpit:
+        condition: service_healthy
+    networks: [backend]
+
+  # The single public entry point: http://localhost:8080/api and Swagger at /docs.
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    restart: unless-stopped
+    environment:
+      JWT_PUBLIC_KEY_PATH: /run/keys/jwt-public.pem
+      IDENTITY_SERVICE_URL: http://identity-service:3000
+      MUNICIPAL_SERVICE_URL: http://municipal-service:3000
+      OCCURRENCE_SERVICE_URL: http://occurrence-service:3000
+      NOTIFICATION_SERVICE_URL: http://notification-service:3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-300}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+    volumes:
+      - ./infra/keys/jwt-public.pem:/run/keys/jwt-public.pem:ro
+    ports:
+      - '${GATEWAY_PORT:-8080}:8080'
+    depends_on:
+      identity-service:
+        condition: service_healthy
+      municipal-service:
+        condition: service_healthy
+      occurrence-service:
+        condition: service_healthy
+      notification-service:
         condition: service_healthy
     networks: [backend]
 
