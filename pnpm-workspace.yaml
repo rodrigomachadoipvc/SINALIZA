@@ -2,6 +2,7 @@ packages:
   - apps/*
   - services/*
   - packages/*
+  - tests/*
 
 # Dependency install scripts are denied unless reviewed and listed here.
 allowBuilds:

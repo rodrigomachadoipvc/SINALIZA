@@ -1,0 +1,24 @@
+{
+  "name": "@sinaliza/system-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Requirement checks (RF01–RF20) against the running stack, through the API gateway",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:system": "vitest run",
+    "cleanup": "node src/cleanup-cli.ts",
+    "summary": "node src/summary.ts"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "3.1158.0",
+    "@sinaliza/config": "workspace:*",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "eslint": "10.13.0",
+    "pg": "8.23.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

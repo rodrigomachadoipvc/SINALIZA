@@ -26,3 +26,6 @@ analytics/**/output/
 .DS_Store
 Thumbs.db
 .idea/
+
+# System test reports (scripts/verificar.sh)
+tests/system/reports/

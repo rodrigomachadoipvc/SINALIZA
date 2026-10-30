@@ -732,6 +732,33 @@ importers:
         specifier: 5.0.5
         version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
 
+  tests/system:
+    devDependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.1158.0
+        version: 3.1158.0
+      '@sinaliza/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      eslint:
+        specifier: 10.13.0
+        version: 10.13.0(jiti@2.7.0)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
 packages:
 
   '@aws-sdk/checksums@3.1001.7':

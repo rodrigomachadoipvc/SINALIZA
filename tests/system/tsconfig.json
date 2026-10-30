@@ -1,0 +1,9 @@
+{
+  "extends": "@sinaliza/config/tsconfig.node.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "vitest.config.ts", "eslint.config.js"]
+}
