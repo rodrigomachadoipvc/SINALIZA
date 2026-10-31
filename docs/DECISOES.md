@@ -318,3 +318,51 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
 - O passo «rever antes de submeter» do RF19 e os ecrãs são das apps (F8/F9), que terão os seus
   próprios testes. Aqui o RF19 verifica a referência devolvida e que o detalhe coincide com o que
   foi submetido.
+
+## D30 — Tokens de design no `@theme` do Tailwind v4, sem as cores por omissão
+
+**Data:** 2026-10-31 · **Fase:** F8
+
+- O Tailwind v4 já não usa `tailwind.config.js`: o tema define-se em CSS, no bloco `@theme` de
+  `apps/backoffice/src/styles.css`. É o equivalente ao «tailwind.config com os tokens» da
+  especificação.
+- `--color-*: initial` apaga a paleta por omissão. Só existem as classes dos tokens da secção 6
+  (`bg-azul`, `text-cinza-texto`, `bg-estado-resolvida`, …), por isso uma cor fora da paleta não
+  compila em vez de passar despercebida.
+- O Recharts e o Leaflet desenham SVG/canvas e precisam dos valores hexadecimais. Esses valores
+  vêm dos mesmos tokens (`STATUS_HEX`, constantes no dashboard). Os clusters do mapa usam só o CSS
+  estrutural do plugin; as cores dele (verde/laranja) não estão na paleta.
+- Alternativa rejeitada: manter o Tailwind 3 com `tailwind.config.js`. Seria seguir a letra da
+  especificação com uma versão antiga.
+
+## D31 — O backoffice lê o endereço da API em runtime (`/config.js`)
+
+**Data:** 2026-10-31 · **Fase:** F8
+
+- A imagem nginx (`nginxinc/nginx-unprivileged`, sem root) gera `/config.js` ao arrancar, a partir
+  de `API_URL`, e o `index.html` carrega-o antes da app. Assim a mesma imagem serve local e cloud
+  (F11) sem reconstruir. Em desenvolvimento, `VITE_API_URL` sobrepõe-se.
+- O script de arranque recusa `API_URL` sem `http(s)://` ou com aspas, `<`, `>`, `;` ou espaços,
+  para que o valor não saia da string JavaScript nem do cabeçalho CSP.
+- O nginx envia CSP (`script-src 'self'`; `connect-src` só para a origem da API; imagens só do
+  próprio site, dos mosaicos OSM e do armazenamento de fotografias), `nosniff`,
+  `frame-ancestors 'none'` e cache longa nos ficheiros com hash.
+- Alternativa rejeitada: `VITE_API_URL` em tempo de build. Obrigava a uma imagem por ambiente.
+
+## D32 — O browser chama o gateway diretamente (CORS), sem proxy no nginx
+
+**Data:** 2026-10-31 · **Fase:** F8
+
+- A SPA em :8081 faz os pedidos a `http://localhost:8080/api`, que já autoriza esta origem
+  (`CORS_ORIGINS`). O gateway continua a ver o IP real do cliente, por isso o limite de pedidos por
+  IP e os logs mantêm-se corretos sem configurar `X-Forwarded-For`.
+- Os tokens ficam em `sessionStorage`: uma recarga mantém a sessão e fechar o separador termina-a.
+  Depois de 30 min sem atividade a sessão termina, com aviso 1 min antes; mexer o rato durante o
+  aviso não o fecha, é preciso escolher «Continuar sessão». Um 401 renova o token uma única vez
+  (pedidos simultâneos partilham a renovação). Depois de «Terminar sessão» o próximo login começa
+  no dashboard; depois de expirar volta à página onde estava.
+- O Leaflet e o Recharts são carregados só nas páginas que os usam (`lazy`). O bundle inicial
+  passou de 1,1 MB para 376 kB.
+- Alternativa rejeitada: um `location /api` no nginx a fazer proxy para o gateway. Evitava o
+  CORS, mas todos os pedidos chegariam ao gateway com o IP do nginx, e o limite por IP passaria
+  a ser global.

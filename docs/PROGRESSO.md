@@ -34,7 +34,12 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   - Critério: resumo com tudo ✅ (21/21: dados de demonstração + RF01–RF20, contra o compose via
     :8080); seed idempotente (45 novas, depois 0 novas); 8 testes unitários dos dados + 5 e2e do
     seed com PostGIS real
-- [ ] **F8** — Backoffice completo
+- [x] **F8** — Backoffice completo
+  - Critério: build sem erros; 22 testes (Testing Library: login e recusa de cidadãos, menus por
+    perfil, filtros no URL, ações por estado, rejeição ≥ 10 caracteres, inatividade); fluxos de
+    gestor e admin verificados no browser contra a API real em :8081 (validar → iniciar resolução
+    → resolver, rejeitar, duplicada com pesquisa, alterar categoria, mapa, dashboard, criar e
+    desativar categoria, criar gestor)
 - [ ] **F9** — App mobile completa
 - [ ] **F10** — Analytics/Databricks (gerador, export, notebooks, bundle, fonte `databricks`)
 - [ ] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
@@ -89,6 +94,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   outros cidadãos pelo concelho, com históricos coerentes com a máquina de estados; D28).
   `scripts/verificar.sh` sobe o compose, corre o seed e os testes de `tests/system` e imprime a
   tabela ✅/❌ (D29).
-- Próximo passo: F8 (backoffice React + Vite): login, lista/pesquisa/filtros, detalhe com ações de
-  estado, mapa, dashboard, gestão de categorias e de gestores; testes com Testing Library e smoke
-  test; servido por nginx em :8081 no compose.
+- F8: `apps/backoffice` (React 19 + Vite 8, React Router 8, TanStack Query, react-hook-form + zod,
+  Tailwind 4 com os tokens no `@theme`, Leaflet + clusters, Recharts, lucide). Servido por nginx sem
+  root em :8081 (`docker compose up -d --build backoffice`), com `/config.js` gerado em runtime
+  (D30–D32). Logotipo em `packages/shared/assets/` (usado também pela app mobile).
+  `PASSWORD_RESET_URL` passou a apontar para :8081.
+- Próximo passo: F9 (app mobile Expo): registo/login, criar ocorrência com fotografia e mapa,
+  lista e detalhe das minhas ocorrências, perfil.

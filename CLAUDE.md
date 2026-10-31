@@ -73,6 +73,9 @@ sh scripts/verificar.sh      # sobe tudo, seed, testes de requisitos → tabela 
 sh scripts/verificar.sh --sem-build   # sem reconstruir imagens; --completo junta lint, typecheck e pnpm test
 pnpm test:system             # só os testes de requisitos (tests/system; precisa da stack a correr)
 pnpm --filter @sinaliza/system-tests cleanup   # apaga restos de testes interrompidos
+pnpm --filter backoffice dev    # backoffice em http://localhost:5173 (usa a API em :8080)
+pnpm --filter backoffice test   # testes do backoffice (Vitest + Testing Library, API simulada)
+docker compose up -d --build backoffice   # backoffice servido por nginx em http://localhost:8081
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
