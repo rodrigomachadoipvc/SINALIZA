@@ -1,0 +1,20 @@
+#!/bin/sh
+# Sourced by the nginx entrypoint (".envsh"), so the exports reach the template step that follows.
+# Writes the runtime config the SPA reads from /config.js, so one image works for any gateway.
+# No `set -eu` here: this file is sourced into the entrypoint shell.
+
+case "${API_URL:-}" in
+  http://* | https://*) ;;
+  *) echo "API_URL must start with http:// or https:// (got: $API_URL)" >&2; exit 1 ;;
+esac
+# Refuse characters that could break out of the JavaScript string or the CSP header.
+if printf '%s' "$API_URL$PHOTO_ORIGIN" | grep -q '[]"'"'"'\<>;[:space:][]'; then
+  echo "API_URL or PHOTO_ORIGIN contains characters that are not allowed" >&2
+  exit 1
+fi
+
+# Origin of the gateway (scheme://host[:port]) for the Content-Security-Policy.
+API_ORIGIN=$(printf '%s' "$API_URL" | sed -E 's#^(https?://[^/]+).*#\1#')
+export API_ORIGIN PHOTO_ORIGIN
+
+printf 'window.SINALIZA_CONFIG = { apiUrl: "%s" };\n' "$API_URL" > /tmp/config.js

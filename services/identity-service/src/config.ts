@@ -50,7 +50,7 @@ export function loadConfig(env: Env = process.env): IdentityConfig {
     accessTokenTtlSeconds: ttlSeconds(accessTokenTtl),
     refreshTokenTtlDays: intEnv(env, 'JWT_REFRESH_TTL_DAYS', 7),
     passwordResetTtlMinutes: intEnv(env, 'PASSWORD_RESET_TTL_MINUTES', 30),
-    passwordResetUrl: env.PASSWORD_RESET_URL ?? 'http://localhost:5173/redefinir-palavra-passe',
+    passwordResetUrl: env.PASSWORD_RESET_URL ?? 'http://localhost:8081/redefinir-palavra-passe',
     authRateLimitPerMinute: intEnv(env, 'AUTH_RATE_LIMIT_PER_MINUTE', 10),
   };
 }

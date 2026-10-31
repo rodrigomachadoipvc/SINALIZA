@@ -132,7 +132,7 @@ services:
       JWT_PUBLIC_KEY_PATH: /run/keys/jwt-public.pem
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
-      PASSWORD_RESET_URL: ${PASSWORD_RESET_URL:-http://localhost:5173/redefinir-palavra-passe}
+      PASSWORD_RESET_URL: ${PASSWORD_RESET_URL:-http://localhost:8081/redefinir-palavra-passe}
       AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-10}
     volumes:
       - ./infra/keys:/run/keys:ro
@@ -255,6 +255,22 @@ services:
         condition: service_healthy
       notification-service:
         condition: service_healthy
+    networks: [backend]
+
+  backoffice:
+    build:
+      context: .
+      dockerfile: apps/backoffice/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Address the browser uses to reach the gateway (not the internal Docker name).
+      API_URL: ${BACKOFFICE_API_URL:-http://localhost:8080/api}
+      PHOTO_ORIGIN: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
+    ports:
+      - '${BACKOFFICE_PORT:-8081}:8080'
+    depends_on:
+      api-gateway:
+        condition: service_started
     networks: [backend]
 
 networks:
