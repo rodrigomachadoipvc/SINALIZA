@@ -1,0 +1,62 @@
+# Databricks Asset Bundle: the notebooks and the daily job that refreshes the lakehouse.
+#   databricks bundle validate
+#   databricks bundle deploy            # target dev (default): paused schedule, "[dev …]" prefix
+#   databricks bundle run lakehouse_diario
+#   databricks bundle deploy -t prod    # schedule active
+# Authentication comes from DATABRICKS_HOST / DATABRICKS_TOKEN (see analytics/README.md).
+
+bundle:
+  name: sinaliza-analytics
+
+variables:
+  catalog:
+    description: Unity Catalog catalog with the bronze, silver and gold schemas.
+    default: sinaliza
+
+resources:
+  jobs:
+    lakehouse_diario:
+      name: Sinaliza · lakehouse diário
+      description: Bronze (Auto Loader) → Silver (MERGE e qualidade) → Gold (indicadores).
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        # 05:30 in Lisbon, after the night's export.
+        quartz_cron_expression: "0 30 5 * * ?"
+        timezone_id: Europe/Lisbon
+        pause_status: UNPAUSED
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+      tags:
+        projeto: sinaliza
+      # No cluster settings: on Free Edition notebook tasks run on serverless compute.
+      tasks:
+        - task_key: bronze
+          notebook_task:
+            notebook_path: ./notebooks/01_bronze_ingestao.py
+          # A schema change stops the first run by design; the retry picks up the new columns.
+          max_retries: 1
+          min_retry_interval_millis: 60000
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ./notebooks/02_silver_limpeza.py
+        - task_key: gold
+          depends_on:
+            - task_key: silver
+          notebook_task:
+            notebook_path: ./notebooks/03_gold_indicadores.py
+
+targets:
+  dev:
+    mode: development
+    default: true
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE
