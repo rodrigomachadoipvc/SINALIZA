@@ -101,7 +101,8 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   `infra/postgres/init/01-databases.sh` cria `identity_db`, `occurrence_db` e `municipal_db`, cada
   uma com o seu utilizador; PostGIS nas duas últimas. Para arrancar: `cp .env.example .env`,
   `sh scripts/gerar-chaves.sh`, `docker compose up -d --wait`.
-- F2: novo pacote `@sinaliza/service-kit` com o que os 5 serviços partilham: filtro de erros PT-PT,
+- F2: novo pacote `@sinaliza/service-kit` com o que os 5 serviços partilham (desde a D43 também o
+  parser JSON que recusa texto que não seja UTF-8): filtro de erros PT-PT,
   `x-request-id`, `ValidationPipe` (whitelist + forbidNonWhitelisted), guarda global JWT RS256 +
   RBAC (`@Public`, `@Roles`, `@CurrentUser`), `EventPublisher` (RabbitMQ com confirms), paginação,
   Swagger em `/docs` e `/docs/openapi.json`, helpers de configuração. O `identity-service` usa Prisma 7

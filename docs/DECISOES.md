@@ -576,3 +576,28 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
 - Alternativa rejeitada: agregar no servidor (contagens por grelha em PostGIS). Dava menos dados
   na rede, mas exigia um endpoint novo e mudanças no backoffice, que já agrupa no cliente com o
   `react-leaflet-cluster`.
+
+## D43 — A API recusa corpos JSON que não sejam UTF-8
+
+**Data:** 2026-10-31 · **Fase:** correção depois da F12
+
+- Um email de mudança de estado mostrava «Verificação» com dois caracteres de substituição
+  (`U+FFFD`) no lugar de «çã». A nota tinha sido criada por um `curl` de teste no Windows (F10),
+  que enviou «çã» em Latin-1 (`E7 E3`). O parser JSON do Express trocou cada byte inválido por
+  `U+FFFD` sem dar erro, e o texto foi gravado assim, enviado por email e exportado para o
+  Databricks.
+- O `configureApp` do `service-kit` regista agora o `express.json` com um `verify` que confirma
+  que os bytes são UTF-8 (`isUtf8` do Node). Se não forem, a API responde 400 «O pedido tem
+  caracteres inválidos. Envie o texto codificado em UTF-8.». Vale para os quatro serviços; o
+  gateway não lê o corpo e devolve a resposta do serviço.
+- O `express.json` é registado diretamente porque o `useBodyParser` do Nest reserva o `verify`. O
+  `verify` só marca o pedido e o erro vem do middleware seguinte: uma exceção lançada dentro do
+  `verify` era reembrulhada pelo Nest com uma mensagem em inglês.
+- Dados corrigidos: a única linha afetada (`status_history.note` da SIN-2026-07277) na
+  `occurrence_db`, nas tabelas `bronze` e `silver` do Databricks, no Parquet exportado em
+  `analytics/output` e no mesmo ficheiro do volume de _landing_. Procurou-se `U+FFFD` e texto mal
+  convertido (`Ã§`, `Ã£`, …) em todas as colunas de texto das três bases, em todas as tabelas do
+  Databricks e nos ficheiros do repositório; não havia mais nenhum caso.
+- Alternativa rejeitada: recusar qualquer texto que contenha `U+FFFD` depois de lido. Também
+  apanhava este caso, mas olhava para o resultado e não para a causa, e recusaria esse carácter
+  enviado de propósito em UTF-8 válido.

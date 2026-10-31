@@ -147,3 +147,8 @@ uma rota nova, acrescenta-a lá e volta a exportar o OpenAPI do serviço**: o te
 - Pacotes ESM (`"type": "module"`); imports relativos com extensão `.js`.
 - Erros da API: `{ statusCode, error, message, details?, requestId }`, mensagens em PT-PT.
 - Listas paginadas: `?page=1&pageSize=20` → `{ items, page, pageSize, total }`.
+- Texto sempre em UTF-8. Os serviços recusam corpos JSON que não sejam UTF-8 válido (D43). No
+  Windows, nunca passes texto com acentos dentro de um comando (`curl -d '…'`, argumentos do
+  PowerShell): a consola converte-o para cp1252. Escreve o corpo num ficheiro UTF-8 e envia-o com
+  `curl --data-binary @ficheiro.json`, ou usa escapes `\uXXXX`. Depois de criar dados de teste,
+  confirma que não há o carácter de substituição `U+FFFD` nas bases de dados.
