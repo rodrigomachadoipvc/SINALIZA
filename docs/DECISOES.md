@@ -511,3 +511,27 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
   dialeto Databricks (`sqlglot`) e o grafo do job.
 - Alternativa rejeitada: inserir pela API. Não permite datas passadas nem históricos com dias de
   intervalo, e enviaria milhares de emails.
+
+## D40 — Cloud com um _override_ do compose e Caddy, sem portas além de 80/443
+
+**Data:** 2026-10-31 · **Fase:** F11
+
+- A especificação fala num perfil `cloud` (secção 2) e num `docker-compose.cloud.yml` (secção 12).
+  Escolhemos o ficheiro de _override_: um perfil só acrescenta serviços, não consegue fechar as
+  portas nem mudar os URLs dos serviços que já existem. Na VM, `COMPOSE_FILE` no `.env` faz com
+  que todos os comandos (`up`, `exec`, `pnpm seed`, o backup) usem os dois ficheiros.
+- O _override_ usa `!reset`/`!override` (Compose ≥ 2.24): o gateway e o backoffice deixam de
+  publicar portas; PostgreSQL, consola do RabbitMQ e consola do armazenamento ficam em
+  `127.0.0.1` da VM, para administração por túnel SSH; o Mailpit fica no perfil `local` e não
+  arranca.
+- Três nomes: `api.`, `backoffice.` e `ficheiros.<domínio>`. As fotografias precisam do seu, porque
+  os URLs pré-assinados são assinados para um _host_ e o Caddy passa o `Host` sem o alterar; um
+  caminho (`api.<domínio>/ficheiros`) partiria a assinatura. CORS, link de recuperação e URLs das
+  fotografias derivam todos de `SINALIZA_DOMAIN`, para não haver quatro sítios a manter iguais.
+- `TRUST_PROXY=uniquelocal` no gateway: só endereços privados (o Caddy na rede do Docker) podem
+  definir o `X-Forwarded-For`, e o _rate limit_ conta o IP real do cliente.
+- Verificado localmente com `SINALIZA_DOMAIN=localhost` (o Caddy usa então a sua CA local): os 22
+  testes de requisitos passaram por HTTPS, incluindo a fotografia lida em `ficheiros.localhost`.
+- Cópias de segurança com `pg_dump -Fc` por base, num script chamado pelo `cron` do _host_
+  (`scripts/backup-postgres.sh`, 14 dias). Rejeitámos um contentor de backup com cron próprio:
+  mais uma imagem para manter, e o `cron` do sistema já existe em qualquer VM.

@@ -65,7 +65,17 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     que as marcas d'água passaram a variáveis de sessão; `column_tags` usa `schema_name`). Com
     `ANALYTICS_SOURCE=databricks` o dashboard dá os mesmos totais, estados, categorias, tendência e
     tempos de resolução que o Postgres em 3 períodos; só os _hotspots_ diferem, por desenho (D36).
-- [ ] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
+- [x] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
+  - Critério: documentação completa ✅ (`README.md` com diagrama, 3 comandos, contas, URLs, Expo
+    Go, estrutura e rastreabilidade RF/RNF; `docs/ARQUITETURA.md` com decisões, eventos, ER das 3
+    bases, máquina de estados e sequência «reportar ocorrência» em Mermaid; `docs/DEPLOY.md` com
+    VM, domínio sslip.io, `.env` de produção, SMTP real, túnel SSH e cópias de segurança).
+    _Override_ verificado nesta máquina com `SINALIZA_DOMAIN=localhost` (CA local do Caddy): só
+    80/443 publicados, HTTP → 308 HTTPS, HSTS, CORS só para `backoffice.localhost`, CSP com os
+    URLs públicos, os 22 testes de requisitos a passar por HTTPS e a fotografia servida por
+    `ficheiros.localhost` (GET sem assinatura → 403). `backup-postgres.sh` testado com restauro
+    numa base temporária (20 040 ocorrências, geometrias válidas). Não foi feita uma instalação
+    numa VM real (fica para o Rodrigo, com `docs/DEPLOY.md`).
 - [ ] **F12** — Verificação final
 
 ## Notas para retomar
@@ -134,4 +144,8 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   com cache de 10 min e 502 em falha (D38), gerador transacional e removível (D39). Ligado ao
   workspace Free Edition do Rodrigo (passos em `analytics/README.md`); a Statement Execution API
   responde em 1,4–2,5 s a frio e 6 ms da cache.
-- Próximo passo: F11 (cloud, README, `ARQUITETURA.md`).
+- F11: `docker-compose.cloud.yml` (override: Caddy em 80/443, consolas em 127.0.0.1, Mailpit no
+  perfil `local`, URLs derivados de `SINALIZA_DOMAIN`) e `infra/caddy/Caddyfile` com
+  `api.`/`backoffice.`/`ficheiros.<domínio>` (D40). Na VM, `COMPOSE_FILE` no `.env` ativa o
+  override em todos os comandos. Backups: `scripts/backup-postgres.sh` + `cron` (`DEPLOY.md` §8).
+- Próximo passo: F12 (verificação final).

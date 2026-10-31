@@ -88,6 +88,10 @@ uv run sinaliza-export                         # occurrence_db + municipal_db �
 uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest
 databricks bundle deploy && databricks bundle run lakehouse_diario   # job bronze → silver → gold
 
+# Cloud (docs/DEPLOY.md): na VM, COMPOSE_FILE=docker-compose.yml:docker-compose.cloud.yml no .env
+docker compose -f docker-compose.yml -f docker-compose.cloud.yml config -q   # valida o override
+sh scripts/backup-postgres.sh                  # pg_dump -Fc das 3 bases para backups/ (14 dias)
+
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
 pnpm --filter identity-service build && pnpm --filter identity-service seed   # contas de demo
