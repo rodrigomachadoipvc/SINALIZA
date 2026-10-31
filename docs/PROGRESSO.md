@@ -56,8 +56,15 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     sqlglot, grafo do bundle, consultas iguais às do serviço); `DatabricksStatsProvider` com 9
     testes unitários (pedido, _chunks_, erros, mapeamento, cache, 502, configuração) e verificado
     no compose (`postgres` por omissão; `databricks` com _host_ inacessível → 502 em PT-PT; sem
-    variáveis → não arranca). Os notebooks e o job não correram num workspace real (falta conta
-    Databricks com token).
+    variáveis → não arranca). Workspace real (Free Edition) ✅: `00_setup` em 34 s; job
+    bronze → silver → gold em ~2 min (20 036 ocorrências em bronze e silver, 0 em quarentena,
+    gold com o autoteste a passar); `04` com OPTIMIZE (2 → 1 ficheiro), VACUUM e _tags_;
+    incremental verificado (uma mudança de estado no backoffice → export de 2 linhas → silver
+    atualizada, sem duplicar). Corrigidos 3 erros que só o serverless mostrou (progresso do
+    _stream_ não é `dict` no Spark Connect; vistas temporárias reavaliadas a cada leitura, pelo
+    que as marcas d'água passaram a variáveis de sessão; `column_tags` usa `schema_name`). Com
+    `ANALYTICS_SOURCE=databricks` o dashboard dá os mesmos totais, estados, categorias, tendência e
+    tempos de resolução que o Postgres em 3 períodos; só os _hotspots_ diferem, por desenho (D36).
 - [ ] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
 - [ ] **F12** — Verificação final
 
@@ -124,6 +131,7 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   `--purge`), `sinaliza-export` (Parquet incremental → volume `sinaliza.bronze.landing`), notebooks
   `00`–`05` e `databricks.yml` (job diário 01 → 02 → 03). Lake sem dados pessoais (D35), gold no
   grão diário (D36), silver com MERGE/quarentena e Liquid Clustering (D37), fonte `databricks`
-  com cache de 10 min e 502 em falha (D38), gerador transacional e removível (D39). Para ligar a um
-  workspace real seguir `analytics/README.md` (conta Free Edition, token, warehouse, `.env`).
+  com cache de 10 min e 502 em falha (D38), gerador transacional e removível (D39). Ligado ao
+  workspace Free Edition do Rodrigo (passos em `analytics/README.md`); a Statement Execution API
+  responde em 1,4–2,5 s a frio e 6 ms da cache.
 - Próximo passo: F11 (cloud, README, `ARQUITETURA.md`).

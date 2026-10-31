@@ -118,11 +118,14 @@ tabela) ficam em `output/export/state.json` e só avançam depois de o envio cor
 ```bash
 databricks bundle validate
 databricks bundle run lakehouse_diario        # corre já: bronze → silver → gold
+databricks bundle run lakehouse_diario --no-wait   # devolve o link e não fica à espera
 databricks bundle deploy -t prod              # agenda às 05:30 (Europe/Lisbon)
 ```
 
 No target `dev` (por omissão) a Databricks pausa o agendamento e prefixa o nome do job com
-`[dev …]`; o `prod` deixa-o ativo. As tarefas correm em computação serverless.
+`[dev …]`; o `prod` deixa-o ativo. As tarefas correm em computação serverless. Uma execução
+completa com ~20 000 ocorrências demora cerca de 2 minutos; se a ligação local cair a meio, o job
+continua no workspace (veja-o em _Jobs & Pipelines_).
 
 Os notebooks `04_otimizacao_e_governanca` (Liquid Clustering, OPTIMIZE, VACUUM, Time Travel,
 _tags_) e `05_consultas_dashboard` (as consultas do backoffice e _datasets_ para um dashboard
@@ -149,6 +152,11 @@ demorar alguns segundos a mais.
 - só computação serverless e um SQL warehouse 2X-Small;
 - até 5 tarefas de jobs em simultâneo (o job usa 1 de cada vez);
 - quotas diárias: ao ultrapassá-las, a computação pára até ao dia seguinte (os dados ficam).
+
+O serverless corre sobre **Spark Connect**, e os notebooks têm isso em conta: o progresso de um
+_stream_ é um objeto e não um `dict`, e uma vista temporária volta a ser calculada sempre que é
+lida — por isso as marcas d'água da silver ficam em variáveis de sessão (`DECLARE VARIABLE`) e não
+em vistas que dependem da própria tabela que se está a escrever.
 
 ## Qualidade
 

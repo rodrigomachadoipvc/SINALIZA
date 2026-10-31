@@ -126,7 +126,8 @@ spark.sql(f"USE CATALOG {catalog}")
 # MAGIC ## `gold.hotspots_h3`
 # MAGIC
 # MAGIC A silver guarda a célula H3 de resolução 9; aqui sobe-se para a resolução 8 (`h3_toparent`,
-# MAGIC hexágonos de ~460 m de lado), próxima da grelha de ~500 m da base operacional. O centro de
+# MAGIC hexágonos de ~460 m de lado e ~0,74 km²). São cerca de 3× maiores do que as células de 0,005°
+# MAGIC (~0,23 km²) da base operacional: menos pontos quentes, mais concentrados. O centro de
 # MAGIC cada hexágono vem de `h3_centerasgeojson` (GeoJSON, para mapas) e em `lat`/`lng` (para a API).
 
 # COMMAND ----------

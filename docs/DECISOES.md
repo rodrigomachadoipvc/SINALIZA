@@ -438,9 +438,13 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
   dia × categoria × estado, as `criadas` (pelo dia de criação e estado atual) e as `resolvidas` com
   a `soma_dias_resolucao` (pelo dia de resolução). Totais, taxas, distribuições, tendência e tempo
   médio somam-se sobre o intervalo; a média é `soma / resolvidas`, nunca uma média de médias.
-- Pontos quentes: H3 de resolução 9 na silver e 8 na `gold.hotspots_h3` (~460 m de lado), perto
-  da grelha de ~500 m da vista `occurrence_facts`. Os hexágonos não coincidem com os quadrados,
-  por isso o mapa muda ligeiramente de fonte para fonte.
+- Pontos quentes: H3 de resolução 9 na silver e 8 na `gold.hotspots_h3` (~460 m de lado,
+  ~0,74 km²), cerca de 3× maior do que as células de 0,005° (~0,23 km²) da `occurrence_facts`.
+  É a única diferença entre fontes: no workspace real, para três períodos (um a meio do mês),
+  totais, estados, categorias, tendência e tempos de resolução deram exatamente os mesmos números;
+  os pontos quentes do Databricks são menos e mais concentrados (o maior junta ~2× mais
+  ocorrências). Com a resolução 9 (~0,1 km²) seria o contrário; a 8 serve melhor um concelho de
+  ~380 km².
 - As restantes tabelas (`tempo_resolucao` com mediana e p90, `tendencia_mensal`, `taxas`,
   `backlog`) servem o notebook 05 e o dashboard AI/BI.
 - A gold é recalculada por inteiro em cada execução (`CREATE OR REPLACE`): com dezenas de milhares
