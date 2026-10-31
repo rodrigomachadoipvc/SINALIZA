@@ -9,4 +9,5 @@ export * from './http/errors.js';
 export * from './http/pagination.js';
 export type * from './http/request-context.js';
 export * from './http/request-id.middleware.js';
+export * from './http/utf8.js';
 export * from './http/validation.js';

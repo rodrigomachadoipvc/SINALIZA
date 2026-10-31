@@ -6,6 +6,7 @@ import { AuthGuard, INTERNAL_TOKEN, JWT_VERIFIER } from './auth/auth.guard.js';
 import { JwtVerifier } from './auth/jwt.js';
 import { AllExceptionsFilter } from './http/all-exceptions.filter.js';
 import { requestIdMiddleware } from './http/request-id.middleware.js';
+import { useStrictJsonParser } from './http/utf8.js';
 import { createValidationPipe } from './http/validation.js';
 
 /**
@@ -41,6 +42,7 @@ export function buildOpenApi(app: INestApplication, options: DocsOptions): OpenA
 /** Applies the cross-cutting HTTP setup shared by every service (also used by e2e tests). */
 export function configureApp(app: INestApplication, docs: DocsOptions): OpenAPIObject {
   app.use(requestIdMiddleware);
+  useStrictJsonParser(app);
   app.useGlobalPipes(createValidationPipe());
   app.enableShutdownHooks();
   const document = buildOpenApi(app, docs);
