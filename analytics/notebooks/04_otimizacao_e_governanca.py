@@ -189,9 +189,9 @@ display(
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT table_schema, table_name, column_name, tag_name, tag_value
+# MAGIC SELECT schema_name, table_name, column_name, tag_name, tag_value
 # MAGIC FROM information_schema.column_tags
-# MAGIC ORDER BY table_schema, table_name, column_name
+# MAGIC ORDER BY schema_name, table_name, column_name
 
 # COMMAND ----------
 
