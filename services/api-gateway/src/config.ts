@@ -10,7 +10,7 @@ export interface GatewayConfig {
   jwtPublicKeyPem: string;
   /** Base URL of each service (inside Docker: http://<name>-service:3000). */
   services: Record<ServiceName, string>;
-  /** Browser origins allowed by CORS (the backoffice). The mobile app does not need CORS. */
+  /** Browser origins allowed by CORS (backoffice; Expo web build on :8082). Native apps need none. */
   corsOrigins: string[];
   /** Requests per minute per client IP on /api. */
   rateLimitPerMinute: number;
@@ -49,7 +49,11 @@ export function loadConfig(env: Env = process.env): GatewayConfig {
       occurrence: env.OCCURRENCE_SERVICE_URL ?? 'http://localhost:3003',
       notification: env.NOTIFICATION_SERVICE_URL ?? 'http://localhost:3004',
     },
-    corsOrigins: parseList(env.CORS_ORIGINS, ['http://localhost:5173', 'http://localhost:8081']),
+    corsOrigins: parseList(env.CORS_ORIGINS, [
+      'http://localhost:5173',
+      'http://localhost:8081',
+      'http://localhost:8082',
+    ]),
     rateLimitPerMinute: intEnv(env, 'RATE_LIMIT_PER_MINUTE', 300),
     trustProxy: parseTrustProxy(env.TRUST_PROXY),
     proxyTimeoutMs: intEnv(env, 'PROXY_TIMEOUT_MS', 30_000),

@@ -239,7 +239,7 @@ services:
       MUNICIPAL_SERVICE_URL: http://municipal-service:3000
       OCCURRENCE_SERVICE_URL: http://occurrence-service:3000
       NOTIFICATION_SERVICE_URL: http://notification-service:3000
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081,http://localhost:8082}
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-300}
       TRUST_PROXY: ${TRUST_PROXY:-false}
     volumes:
