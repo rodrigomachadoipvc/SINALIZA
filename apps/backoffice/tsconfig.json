@@ -1,0 +1,15 @@
+{
+  "extends": "@sinaliza/config/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client", "@testing-library/jest-dom/vitest", "leaflet.markercluster"],
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["src", "vite.config.ts", "eslint.config.js"]
+}

@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import 'leaflet/dist/leaflet.css';
+
+/*
+ * Sinaliza design tokens (spec section 6). Tailwind's default palette is switched off, so only
+ * these colours exist: `bg-azul`, `text-cinza-texto`, `bg-estado-resolvida`, ...
+ */
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-azul: #1a2b4c;
+  --color-azul-pressionado: #12203a;
+  --color-amarelo: #ffc107;
+  --color-amarelo-pressionado: #e0a800;
+  --color-ambar: #b45309;
+  --color-branco: #ffffff;
+  --color-cinza-claro: #f4f5f7;
+  --color-cinza-texto: #4b5563;
+  --color-cinza-contorno: #6b7280;
+  --color-cinza-divisoria: #d1d5db;
+
+  --color-estado-recebida: #4b5563;
+  --color-estado-em-analise: #1565c0;
+  --color-estado-em-resolucao: #b45309;
+  --color-estado-resolvida: #2e7d32;
+  --color-estado-rejeitada: #c62828;
+  --color-estado-duplicada: #546e7a;
+  --color-estado-anulada: #6b7280;
+
+  --color-sucesso: #2e7d32;
+  --color-erro: #c62828;
+  --color-erro-pressionado: #a31f1f;
+  --color-info: #1565c0;
+
+  --color-superficie-amarelo: #fff8e1;
+  --color-superficie-erro: #fdecea;
+  --color-superficie-sucesso: #eaf4ea;
+  --color-superficie-info: #e8f0fb;
+
+  --font-*: initial;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-titulo: 'Poppins', 'Inter', system-ui, sans-serif;
+
+  /* Type scale: size/line-height from the spec (minimum 12). */
+  --text-*: initial;
+  --text-titulo: 28px;
+  --text-titulo--line-height: 36px;
+  --text-h2: 20px;
+  --text-h2--line-height: 28px;
+  --text-h3: 17px;
+  --text-h3--line-height: 24px;
+  --text-corpo: 16px;
+  --text-corpo--line-height: 24px;
+  --text-pequeno: 14px;
+  --text-pequeno--line-height: 20px;
+  --text-legenda: 12px;
+  --text-legenda--line-height: 16px;
+
+  --radius-campo: 8px;
+  --radius-cartao: 12px;
+}
+
+@layer base {
+  html {
+    @apply bg-cinza-claro font-sans text-corpo text-azul;
+    min-width: 1024px;
+  }
+
+  h1 {
+    @apply font-titulo text-titulo font-semibold;
+  }
+
+  h2 {
+    @apply text-h2 font-semibold;
+  }
+
+  h3 {
+    @apply text-h3 font-semibold;
+  }
+
+  /* Visible focus everywhere (RNF: accessibility). */
+  :focus-visible {
+    outline: 3px solid var(--color-amarelo);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px var(--color-azul);
+  }
+}
+
+/* Leaflet: keep popups and controls in the Sinaliza type. */
+.leaflet-container {
+  font-family: var(--font-sans);
+}
+
+.sinaliza-pin {
+  background: none;
+  border: none;
+}
+
+/* Map clusters: blue with white text and a yellow ring (contrast 13:1). */
+.sinaliza-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-amarelo);
+  border-radius: 9999px;
+  background: var(--color-azul);
+  color: var(--color-branco);
+  font-weight: 600;
+  font-size: 0.875rem;
+}

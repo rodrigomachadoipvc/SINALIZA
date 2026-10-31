@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="t">
+  <title id="t">Sinaliza</title>
+  <defs>
+    <clipPath id="left"><rect x="0" y="0" width="32" height="64"/></clipPath>
+    <clipPath id="right"><rect x="32" y="0" width="32" height="64"/></clipPath>
+  </defs>
+  <!-- Orbit ring, back half -->
+  <path d="M5.5 44.5 C 2 36, 18 25, 37 21" fill="none" stroke="#1A2B4C" stroke-width="3" stroke-linecap="round"/>
+  <!-- Map pin: yellow left half, blue right half -->
+  <path clip-path="url(#left)" fill="#FFC107" d="M32 60 C 22 46 11 36 11 24 A 21 21 0 0 1 53 24 C 53 36 42 46 32 60 Z"/>
+  <path clip-path="url(#right)" fill="#1A2B4C" d="M32 60 C 22 46 11 36 11 24 A 21 21 0 0 1 53 24 C 53 36 42 46 32 60 Z"/>
+  <!-- Warning sign -->
+  <path d="M32 11.5 L44 32 H20 Z" fill="#FFC107" stroke="#1A2B4C" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="30.6" y="17.5" width="2.8" height="8.5" rx="1.4" fill="#1A2B4C"/>
+  <circle cx="32" cy="29" r="1.7" fill="#1A2B4C"/>
+  <!-- Orbit ring, front half -->
+  <path d="M37 21 C 56 17, 64 22, 58.5 30 C 53 38, 30 47, 5.5 44.5" fill="none" stroke="#1A2B4C" stroke-width="3" stroke-linecap="round"/>
+</svg>
