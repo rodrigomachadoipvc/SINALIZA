@@ -6,9 +6,11 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useInactivity } from '../auth/useInactivity';
+import type { Dashboard } from '../api/types';
 import { CATEGORY_ICON_COMPONENTS } from '../components/icons';
 import { STATUS_BG, STATUS_HEX, StatusBadge } from '../components/StatusBadge';
-import { formatDays, formatPercent, todayIso } from '../lib/format';
+import { formatDateTime, formatDays, formatPercent, todayIso } from '../lib/format';
+import { SourceIndicator } from '../pages/DashboardPage';
 
 describe('icons and status colours', () => {
   it('has a Lucide component for every category icon the API accepts', () => {
@@ -100,5 +102,21 @@ describe('useInactivity', () => {
       vi.advanceTimersByTime(3 * 60_000);
     });
     expect(onTimeout).not.toHaveBeenCalled();
+  });
+});
+
+describe('SourceIndicator', () => {
+  const base = { updatedAt: '2026-10-31T14:43:42.638Z' } as Dashboard;
+
+  it('shows when the Databricks gold layer was computed', () => {
+    render(<SourceIndicator data={{ ...base, source: 'databricks' }} />);
+    expect(
+      screen.getByText(`Databricks · atualizado a ${formatDateTime(base.updatedAt)}`),
+    ).toBeInTheDocument();
+  });
+
+  it('names the operational database otherwise', () => {
+    render(<SourceIndicator data={{ ...base, source: 'postgres' }} />);
+    expect(screen.getByText('Base de dados operacional')).toBeInTheDocument();
   });
 });
