@@ -22,7 +22,7 @@ resources:
       timeout_seconds: 3600
       schedule:
         # 05:30 in Lisbon, after the night's export.
-        quartz_cron_expression: "0 30 5 * * ?"
+        quartz_cron_expression: '0 30 5 * * ?'
         timezone_id: Europe/Lisbon
         pause_status: UNPAUSED
       parameters:
