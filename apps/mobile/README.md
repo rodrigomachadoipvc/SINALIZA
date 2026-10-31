@@ -1,6 +1,6 @@
 # Sinaliza — app mobile (cidadão)
 
-App Expo (SDK 57, Expo Router) para o cidadão reportar e acompanhar ocorrências. Corre no
+App Expo (SDK 58, Expo Router) para o cidadão reportar e acompanhar ocorrências. Corre no
 **Expo Go**, sem _development build_.
 
 ## Configurar o endereço da API

@@ -369,7 +369,7 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
 
 ## D33 — App mobile no Expo SDK 57 (e não no 58)
 
-**Data:** 2026-10-31 · **Fase:** F9
+**Data:** 2026-10-31 · **Fase:** F9 · **Substituída por D41**
 
 - A especificação pede o SDK estável mais recente **e** que a app corra no Expo Go, sem
   _development build_. O SDK 58 saiu a 2026-10-15, mas as notas de lançamento dizem que o Expo Go
@@ -535,3 +535,24 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
 - Cópias de segurança com `pg_dump -Fc` por base, num script chamado pelo `cron` do _host_
   (`scripts/backup-postgres.sh`, 14 dias). Rejeitámos um contentor de backup com cron próprio:
   mais uma imagem para manter, e o `cron` do sistema já existe em qualquer VM.
+
+## D41 — App mobile atualizada para o Expo SDK 58
+
+**Data:** 2026-10-31 · **Substitui:** D33
+
+- No primeiro teste num iPhone real, o Expo Go da App Store já era o do SDK 58 e recusou a app
+  («Project is incompatible with this version of Expo Go»). No iOS só há a versão mais recente do
+  Expo Go, por isso a razão da D33 deixou de existir.
+- Versões tiradas do `bundledNativeModules.json` do `expo@58.0.21`, cada uma na versão mais recente
+  com pelo menos 2 dias: React Native 0.88.1, React 19.3.0, `expo-router` 58.0.28,
+  `jest-expo` 58.0.13 e Jest 30. `npx expo install --check` só aponta patches publicados no próprio
+  dia (`expo` 58.0.22, `expo-router` 58.0.29, `@expo/metro-runtime` 58.0.16).
+- Alterações de código obrigadas pelos tipos novos: a barra de separadores usa `emitter` e
+  `navigateToTab` (o Expo Router 58 deixou de passar `navigation` ao `tabBar`); o `TextField`
+  reencaminha um `TextInputInstance` (API TypeScript estrita do RN 0.88); as listas usam
+  `undefined` em vez de `null` nos componentes opcionais.
+- Revisto o guia de migração do Expo Router 57 → 58: a app não usa `web.output: "server"`,
+  `initialRouteName`, `redirect`/`initialParams` em `Screen`, nem cabeçalhos nativos (todos com
+  `headerShown: false`), por isso nada mais muda.
+- Alternativa rejeitada: ficar no SDK 57 e usar um simulador de iOS ou um _development build_.
+  Obrigava a ter Xcode (só em macOS) e contrariava o requisito de correr no Expo Go.
