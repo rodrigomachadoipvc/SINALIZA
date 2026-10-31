@@ -55,14 +55,15 @@ export function useMunicipality() {
 
 // ------------------------------------------------------------------ public map
 
-export function useMapPins(category: string | null) {
+/** Pins inside `bbox` (`oeste,sul,este,norte`, see `bboxParam`), optionally of one category. */
+export function useMapPins(category: string | null, bbox: string) {
   return useQuery({
-    queryKey: [...keys.map, category],
+    queryKey: [...keys.map, category, bbox],
     queryFn: () =>
-      get<{ items: MapPin[]; truncated: boolean }>(
-        '/map/occurrences',
-        category ? { category } : undefined,
-      ),
+      get<{ items: MapPin[]; truncated: boolean }>('/map/occurrences', {
+        bbox,
+        ...(category ? { category } : {}),
+      }),
     placeholderData: keepPreviousData,
   });
 }

@@ -92,6 +92,7 @@ export const t = {
     mapaDescricao: 'Mapa do concelho de Barcelos com as ocorrências reportadas',
     pino: (categoria: string, estado: string, ref: string) =>
       `${categoria}, ${estado}, ${ref}. Toque para ver detalhes.`,
+    grupo: (n: number) => `${n} ocorrências nesta zona. Toque para aproximar.`,
     demasiadas: 'Há demasiadas ocorrências para mostrar todas. Aproxime o mapa.',
     semFotografia: 'Ocorrência submetida sem fotografia',
     fotografia: (categoria: string) => `Fotografia da ocorrência de ${categoria}`,

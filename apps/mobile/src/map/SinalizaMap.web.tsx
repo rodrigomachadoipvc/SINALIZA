@@ -1,13 +1,15 @@
 import 'leaflet/dist/leaflet.css';
 
 import L from 'leaflet';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { MapContainer, Marker, Polygon, TileLayer, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Polygon, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 
 import { OSM_TILES } from '../config';
+import { t } from '../i18n/pt-PT';
 import { colors, statusColors } from '../theme/tokens';
-import { boundaryRings, type LatLng, type SinalizaMapProps } from './types';
+import { buildPinIndex, clusterItems, type MapItem, type MapViewport } from './cluster';
+import { boundaryRings, type LatLng, NO_PINS, type SinalizaMapProps } from './types';
 
 function dotIcon(color: string, size: number): L.DivIcon {
   return L.divIcon({
@@ -16,6 +18,63 @@ function dotIcon(color: string, size: number): L.DivIcon {
     iconAnchor: [size / 2, size / 2],
     html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:3px solid #fff;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.4)"></span>`,
   });
+}
+
+function clusterIcon(count: number): L.DivIcon {
+  const size = count < 10 ? 36 : count < 100 ? 44 : 52;
+  return L.divIcon({
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<span style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${colors.azul};color:#fff;font:600 12px sans-serif;border:3px solid #fff;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.4)">${count}</span>`,
+  });
+}
+
+function viewportOf(map: L.Map): MapViewport {
+  const b = map.getBounds();
+  return { bbox: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], zoom: map.getZoom() };
+}
+
+/** Clusters the pins for the visible area, like the native map. */
+function ClusteredPins({
+  pins,
+  onPinPress,
+  onViewportChange,
+}: Pick<SinalizaMapProps, 'onPinPress' | 'onViewportChange'> & { pins: SinalizaMapProps['pins'] }) {
+  const map = useMap();
+  const [viewport, setViewport] = useState(() => viewportOf(map));
+  useMapEvents({
+    moveend: () => {
+      const next = viewportOf(map);
+      setViewport(next);
+      onViewportChange?.(next);
+    },
+  });
+  const index = useMemo(() => buildPinIndex(pins ?? NO_PINS), [pins]);
+  const items: MapItem[] = useMemo(() => clusterItems(index, viewport), [index, viewport]);
+  return items.map((item) =>
+    item.kind === 'cluster' ? (
+      <Marker
+        key={`c${item.id}-${item.count}`}
+        position={[item.lat, item.lng]}
+        icon={clusterIcon(item.count)}
+        title={t.mapa.grupo(item.count)}
+        alt={t.mapa.grupo(item.count)}
+        keyboard
+        eventHandlers={{ click: () => map.setView([item.lat, item.lng], item.zoom) }}
+      />
+    ) : (
+      <Marker
+        key={item.pin.id}
+        position={[item.pin.lat, item.pin.lng]}
+        icon={dotIcon(statusColors[item.pin.status], 22)}
+        title={item.pin.label}
+        alt={item.pin.label}
+        keyboard
+        eventHandlers={onPinPress ? { click: () => onPinPress(item.pin.id) } : {}}
+      />
+    ),
+  );
 }
 
 function ClickToMove({ onChange }: { onChange: (p: LatLng) => void }) {
@@ -29,8 +88,9 @@ export function SinalizaMap({
   zoom,
   accessibilityLabel,
   boundary,
-  pins = [],
+  pins = NO_PINS,
   onPinPress,
+  onViewportChange,
   marker,
   onMarkerChange,
   interactive = true,
@@ -63,17 +123,7 @@ export function SinalizaMap({
             }}
           />
         ))}
-        {pins.map((p) => (
-          <Marker
-            key={p.id}
-            position={[p.lat, p.lng]}
-            icon={dotIcon(statusColors[p.status], 22)}
-            title={p.label}
-            alt={p.label}
-            keyboard
-            eventHandlers={onPinPress ? { click: () => onPinPress(p.id) } : {}}
-          />
-        ))}
+        <ClusteredPins pins={pins} onPinPress={onPinPress} onViewportChange={onViewportChange} />
         {marker ? (
           <Marker
             position={[marker.lat, marker.lng]}

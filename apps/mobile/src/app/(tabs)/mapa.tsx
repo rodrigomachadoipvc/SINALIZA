@@ -15,19 +15,31 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { BARCELOS } from '../../config';
 import { t } from '../../i18n/pt-PT';
 import { relativeDay } from '../../lib/format';
+import { bboxParam, viewportFromRegion } from '../../map/cluster';
 import { SinalizaMap } from '../../map/SinalizaMap';
-import type { MapPinView } from '../../map/types';
+import { deltaForZoom, type MapPinView } from '../../map/types';
 import { colors, radius, space, statusColors } from '../../theme/tokens';
 
 const LEGEND: OccurrenceStatus[] = ['RECEBIDA', 'EM_ANALISE', 'EM_RESOLUCAO', 'RESOLVIDA'];
+
+const INITIAL_BBOX = bboxParam(
+  viewportFromRegion({
+    latitude: BARCELOS.lat,
+    longitude: BARCELOS.lng,
+    latitudeDelta: deltaForZoom(BARCELOS.zoom),
+    longitudeDelta: deltaForZoom(BARCELOS.zoom),
+  }).bbox,
+);
 
 /** A05 · Public map of the municipality, with category filters and the D4 detail panel. */
 export default function MapScreen() {
   const [category, setCategory] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  // Only the visible area (plus a margin) is fetched; panning inside it reuses the cached response.
+  const [bbox, setBbox] = useState(INITIAL_BBOX);
   const categories = useCategories();
   const municipality = useMunicipality();
-  const pins = useMapPins(category);
+  const pins = useMapPins(category, bbox);
 
   const iconBySlug = useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.slug, c.icon])),
@@ -55,6 +67,7 @@ export default function MapScreen() {
         boundary={municipality.data?.boundary}
         pins={views}
         onPinPress={setSelected}
+        onViewportChange={(v) => setBbox(bboxParam(v.bbox))}
       />
       <SafeAreaView edges={['top']} style={styles.overlay} pointerEvents="box-none">
         <View style={styles.header}>
