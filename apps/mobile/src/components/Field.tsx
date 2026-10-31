@@ -1,6 +1,13 @@
 import { CircleAlert, Eye, EyeOff } from 'lucide-react-native';
 import { forwardRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  type TextInputProps,
+  View,
+} from 'react-native';
 
 import { t } from '../i18n/pt-PT';
 import { colors, fonts, MAX_FONT_SCALE, radius, space, TOUCH } from '../theme/tokens';
@@ -30,7 +37,7 @@ function FieldMessage({ error, hint }: { error?: string | undefined; hint?: stri
 }
 
 /** Text field: label always visible, 48 px high, error next to it with an icon and text. */
-export const TextField = forwardRef<TextInput, FieldProps>(function TextField(
+export const TextField = forwardRef<TextInputInstance, FieldProps>(function TextField(
   { label, error, hint, password = false, invalid = false, editable = true, ...rest },
   ref,
 ) {

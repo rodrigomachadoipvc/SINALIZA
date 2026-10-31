@@ -14,3 +14,5 @@ allowBuilds:
   cpu-features: false # optional native speed-up for ssh2 (Testcontainers)
   ssh2: false # pure-JS fallback is enough; only used by Testcontainers
   protobufjs: false # postinstall only checks versions (Testcontainers)
+  '@parcel/watcher': false # prebuilt binary comes from an optional platform package (jest-expo)
+  unrs-resolver: false # napi-postinstall fallback; the binary is an optional platform package (jest 30)

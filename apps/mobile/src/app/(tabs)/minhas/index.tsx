@@ -90,7 +90,7 @@ export default function MyOccurrences() {
             <AppText variant="pequeno" accessibilityLiveRegion="polite">
               {t.minhas.contador(total)}
             </AppText>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={empty}
         renderItem={({ item }) => (
@@ -105,7 +105,7 @@ export default function MyOccurrences() {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}
         ListFooterComponent={
-          query.isFetchingNextPage ? <ActivityIndicator color={colors.azul} /> : null
+          query.isFetchingNextPage ? <ActivityIndicator color={colors.azul} /> : undefined
         }
         refreshControl={
           <RefreshControl

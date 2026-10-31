@@ -20,7 +20,7 @@ const TABS: Record<string, { label: string; icon: LucideIcon }> = {
  * Blue 64 dp bar: Mapa · Reportar · Minhas · Perfil. «Reportar» is not a tab: it opens the report
  * wizard as a full-screen modal over whatever tab is showing.
  */
-export function TabBar({ state, navigation }: TabBarProps) {
+export function TabBar({ state, emitter, navigateToTab }: TabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -35,12 +35,12 @@ export function TabBar({ state, navigation }: TabBarProps) {
       <Pressable
         key={route.key}
         onPress={() => {
-          const event = navigation.emit({
+          const event = emitter.emit({
             type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
-          if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+          if (!focused && !event.defaultPrevented) navigateToTab(route.key);
         }}
         accessibilityRole="tab"
         accessibilityLabel={info.label}
