@@ -1,0 +1,89 @@
+# Sinaliza — cloud override (see docs/DEPLOY.md). Put this in the VM's .env so every
+# `docker compose` command uses both files:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.cloud.yml
+#
+# What changes from the local stack:
+# - Caddy terminates TLS on 80/443 for api.<domain>, backoffice.<domain> and ficheiros.<domain>;
+# - nothing else is published to the internet: the admin UIs (PostgreSQL, RabbitMQ, storage
+#   console) listen on 127.0.0.1 only and are reached through an SSH tunnel;
+# - public addresses (CORS, reset link, photo URLs) are derived from SINALIZA_DOMAIN;
+# - email goes to a real SMTP server and Mailpit does not start.
+
+services:
+  caddy:
+    image: caddy:2.11.7-alpine
+    restart: unless-stopped
+    environment:
+      SINALIZA_DOMAIN: ${SINALIZA_DOMAIN:?set SINALIZA_DOMAIN in .env (e.g. 20.10.30.40.sslip.io)}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env (certificate expiry notices)}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+      backoffice:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    networks: [backend]
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:2019/config/']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  postgis:
+    ports: !override
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+
+  rabbitmq:
+    ports: !override
+      - '127.0.0.1:${RABBITMQ_UI_PORT:-15672}:15672'
+
+  storage:
+    ports: !override
+      - '127.0.0.1:${S3_CONSOLE_PORT:-9001}:9001'
+
+  # Only for local development; `--profile local` would start it.
+  mailpit:
+    profiles: [local]
+
+  identity-service:
+    environment:
+      PASSWORD_RESET_URL: https://backoffice.${SINALIZA_DOMAIN:?}/redefinir-palavra-passe
+
+  occurrence-service:
+    environment:
+      S3_PUBLIC_ENDPOINT: https://ficheiros.${SINALIZA_DOMAIN:?}
+
+  notification-service:
+    environment:
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST in .env (SendGrid or Mailtrap, see docs/DEPLOY.md)}
+      SMTP_PORT: ${SMTP_PORT:?set SMTP_PORT in .env}
+    depends_on: !override
+      rabbitmq:
+        condition: service_healthy
+
+  api-gateway:
+    environment:
+      CORS_ORIGINS: https://backoffice.${SINALIZA_DOMAIN:?}
+      # Caddy reaches the gateway from the private Docker network: trust its X-Forwarded-For, so
+      # the rate limits count real client addresses.
+      TRUST_PROXY: uniquelocal
+    ports: !reset []
+
+  backoffice:
+    environment:
+      API_URL: https://api.${SINALIZA_DOMAIN:?}/api
+      PHOTO_ORIGIN: https://ficheiros.${SINALIZA_DOMAIN:?}
+    ports: !reset []
+
+volumes:
+  caddy-data:
+  caddy-config:

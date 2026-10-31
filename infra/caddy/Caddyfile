@@ -1,0 +1,39 @@
+# Sinaliza — HTTPS entry point in the cloud (docker-compose.cloud.yml).
+# Caddy obtains and renews the certificates automatically (Let's Encrypt or ZeroSSL) for the three
+# names below; ports 80 and 443 of the VM must be open. With SINALIZA_DOMAIN=localhost it uses its
+# own local CA instead (only for testing the override on a development machine).
+
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+# REST API and Swagger UI (/docs): the gateway is the only entry point to the services.
+api.{$SINALIZA_DOMAIN} {
+	import common
+	reverse_proxy api-gateway:8080
+}
+
+# Backoffice (static build served by nginx, which sets its own CSP).
+backoffice.{$SINALIZA_DOMAIN} {
+	import common
+	reverse_proxy backoffice:8080
+}
+
+# Photos: pre-signed S3 URLs are signed for this host, so the Host header must reach the storage
+# unchanged (Caddy keeps it by default). Only signed GETs work: the bucket is private.
+ficheiros.{$SINALIZA_DOMAIN} {
+	import common
+	reverse_proxy storage:9000
+}
