@@ -172,16 +172,24 @@ spark.sql(f"USE CATALOG {catalog}")
 # MAGIC O histórico só cresce, por isso o `MERGE` apenas insere eventos novos. Depois recalcula-se,
 # MAGIC para as ocorrências tocadas neste lote, a ordem dos eventos e o tempo passado em cada estado
 # MAGIC (funções de janela `row_number` e `lead`).
+# MAGIC
+# MAGIC A marca d'água (o último `_ingested_at` já processado) fica fixa numa variável de sessão antes
+# MAGIC de escrever: uma vista temporária é recalculada sempre que é lida, e se lesse a marca da própria
+# MAGIC silver ficaria vazia logo depois do primeiro `MERGE`.
 
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC DECLARE OR REPLACE VARIABLE history_until TIMESTAMP;
+# MAGIC SET VAR history_until =
+# MAGIC   (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.status_history);
+# MAGIC
 # MAGIC CREATE OR REPLACE TEMP VIEW history_batch AS
 # MAGIC SELECT CAST(id AS STRING) AS id, CAST(occurrence_id AS STRING) AS occurrence_id,
 # MAGIC        from_status, to_status, note, reason, CAST(changed_by AS STRING) AS changed_by,
 # MAGIC        changed_by_role, CAST(changed_at AS TIMESTAMP) AS changed_at, _ingested_at
 # MAGIC FROM bronze.status_history
-# MAGIC WHERE _ingested_at > (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.status_history)
+# MAGIC WHERE _ingested_at > history_until
 # MAGIC QUALIFY row_number() OVER (PARTITION BY id ORDER BY _ingested_at DESC) = 1;
 # MAGIC
 # MAGIC MERGE INTO silver.status_history AS t
@@ -202,7 +210,9 @@ spark.sql(f"USE CATALOG {catalog}")
 # MAGIC          lead(changed_at) OVER w AS ate,
 # MAGIC          (unix_millis(lead(changed_at) OVER w) - unix_millis(changed_at)) / 3600000.0 AS horas_no_estado
 # MAGIC   FROM silver.status_history
+# MAGIC   -- Occurrences with new events, and any event still without an order (self-healing).
 # MAGIC   WHERE occurrence_id IN (SELECT occurrence_id FROM history_batch)
+# MAGIC      OR occurrence_id IN (SELECT occurrence_id FROM silver.status_history WHERE ordem IS NULL)
 # MAGIC   WINDOW w AS (PARTITION BY occurrence_id ORDER BY changed_at, id)
 # MAGIC ) AS s
 # MAGIC ON t.id = s.id
@@ -221,18 +231,17 @@ spark.sql(f"USE CATALOG {catalog}")
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC -- Already processed: merged into silver or sent to quarantine (fixed before writing, see above).
+# MAGIC DECLARE OR REPLACE VARIABLE occurrences_until TIMESTAMP;
+# MAGIC SET VAR occurrences_until = greatest(
+# MAGIC   (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.occurrences),
+# MAGIC   (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.occurrences_quarentena));
+# MAGIC
 # MAGIC CREATE OR REPLACE TEMP VIEW occurrences_batch AS
-# MAGIC WITH done AS (
-# MAGIC   -- Already processed: merged into silver or sent to quarantine.
-# MAGIC   SELECT greatest(
-# MAGIC            (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.occurrences),
-# MAGIC            (SELECT coalesce(max(_ingested_at), TIMESTAMP '1970-01-01') FROM silver.occurrences_quarentena)
-# MAGIC          ) AS until
-# MAGIC ),
-# MAGIC latest AS (
+# MAGIC WITH latest AS (
 # MAGIC   SELECT *
 # MAGIC   FROM bronze.occurrences
-# MAGIC   WHERE _ingested_at > (SELECT until FROM done)
+# MAGIC   WHERE _ingested_at > occurrences_until
 # MAGIC   QUALIFY row_number() OVER (PARTITION BY id ORDER BY updated_at DESC, _ingested_at DESC) = 1
 # MAGIC ),
 # MAGIC typed AS (
