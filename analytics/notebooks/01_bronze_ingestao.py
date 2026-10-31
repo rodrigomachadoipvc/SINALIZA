@@ -44,7 +44,13 @@ TABLES = ("occurrences", "status_history", "categories")
 # COMMAND ----------
 
 
-def ingest(table: str) -> dict:
+def input_rows(progress) -> int:
+    # Classic Spark returns dicts; Spark Connect (serverless) returns StreamingQueryProgress.
+    value = progress.get("numInputRows") if isinstance(progress, dict) else progress.numInputRows
+    return int(value or 0)
+
+
+def ingest(table: str) -> tuple[str, int]:
     stream = (
         spark.readStream.format("cloudFiles")
         .option("cloudFiles.format", "parquet")
@@ -63,12 +69,12 @@ def ingest(table: str) -> dict:
         .toTable(f"bronze.{table}")
     )
     query.awaitTermination()
-    progress = query.lastProgress or {}
-    return {"tabela": table, "linhas_novas": progress.get("numInputRows", 0)}
+    # availableNow may run several micro-batches: add them all up.
+    return table, sum(input_rows(p) for p in query.recentProgress)
 
 
 results = [ingest(table) for table in TABLES]
-display(spark.createDataFrame(results))
+display(spark.createDataFrame(results, "tabela STRING, linhas_novas LONG"))
 
 # COMMAND ----------
 
