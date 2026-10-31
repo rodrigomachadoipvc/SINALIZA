@@ -1,0 +1,12 @@
+{
+  "extends": ["@sinaliza/config/tsconfig.base.json", "expo/tsconfig.base.json"],
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "lib": ["ESNext", "DOM"],
+    "types": ["jest", "node"]
+  },
+  "include": ["src", "*.d.ts", "metro.config.js", "eslint.config.mjs"]
+}

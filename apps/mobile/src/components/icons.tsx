@@ -1,0 +1,105 @@
+import type { CategoryIcon as CategoryIconName, OccurrenceStatus } from '@sinaliza/shared';
+import {
+  Accessibility,
+  Baby,
+  Ban,
+  Bike,
+  Building2,
+  Bus,
+  Car,
+  CircleCheck,
+  Clock,
+  Construction,
+  Copy,
+  Dog,
+  Droplets,
+  Ellipsis,
+  Fence,
+  Flag,
+  Flame,
+  Footprints,
+  Hammer,
+  Leaf,
+  Lightbulb,
+  type LucideIcon,
+  MapPin,
+  PaintBucket,
+  Recycle,
+  School,
+  Search,
+  ShieldAlert,
+  Signpost,
+  Sprout,
+  TrafficCone,
+  Trash2,
+  TreePine,
+  TriangleAlert,
+  Volume2,
+  Waves,
+  Wind,
+  Wrench,
+  X,
+  Zap,
+} from 'lucide-react-native';
+
+import { colors } from '../theme/tokens';
+
+/** One component per icon an admin can choose for a category (same list as the backoffice). */
+export const CATEGORY_ICON_COMPONENTS: Record<CategoryIconName, LucideIcon> = {
+  accessibility: Accessibility,
+  baby: Baby,
+  bike: Bike,
+  'building-2': Building2,
+  bus: Bus,
+  car: Car,
+  construction: Construction,
+  dog: Dog,
+  droplets: Droplets,
+  ellipsis: Ellipsis,
+  fence: Fence,
+  flame: Flame,
+  footprints: Footprints,
+  hammer: Hammer,
+  leaf: Leaf,
+  lightbulb: Lightbulb,
+  'map-pin': MapPin,
+  'paint-bucket': PaintBucket,
+  recycle: Recycle,
+  school: School,
+  'shield-alert': ShieldAlert,
+  signpost: Signpost,
+  sprout: Sprout,
+  'traffic-cone': TrafficCone,
+  'trash-2': Trash2,
+  'tree-pine': TreePine,
+  'triangle-alert': TriangleAlert,
+  'volume-2': Volume2,
+  waves: Waves,
+  wind: Wind,
+  wrench: Wrench,
+  zap: Zap,
+};
+
+/** Status icons from the spec: clock, search, flag, circle-check, x, copy, ban. */
+export const STATUS_ICON_COMPONENTS: Record<OccurrenceStatus, LucideIcon> = {
+  RECEBIDA: Clock,
+  EM_ANALISE: Search,
+  EM_RESOLUCAO: Flag,
+  RESOLVIDA: CircleCheck,
+  REJEITADA: X,
+  DUPLICADA: Copy,
+  ANULADA: Ban,
+};
+
+export function CategoryIcon({
+  name,
+  size = 24,
+  color = colors.azul,
+}: {
+  name: string | undefined;
+  size?: number;
+  color?: string;
+}) {
+  const Icon = (name && CATEGORY_ICON_COMPONENTS[name as CategoryIconName]) || Ellipsis;
+  return <Icon size={size} color={color} strokeWidth={2} aria-hidden />;
+}

@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Sinaliza",
+    "slug": "sinaliza",
+    "version": "1.0.0",
+    "scheme": "sinaliza",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFFFF",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "pt.sinaliza.app"
+    },
+    "android": {
+      "package": "pt.sinaliza.app"
+    },
+    "web": {
+      "output": "single",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Sinaliza usa a sua localização para indicar onde está o problema que vai reportar."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Sinaliza precisa de aceder às fotografias para anexar uma imagem à ocorrência.",
+          "cameraPermission": "O Sinaliza precisa da câmara para fotografar o problema que vai reportar."
+        }
+      ]
+    ]
+  }
+}
