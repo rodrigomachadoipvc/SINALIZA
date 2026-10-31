@@ -366,3 +366,49 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
 - Alternativa rejeitada: um `location /api` no nginx a fazer proxy para o gateway. Evitava o
   CORS, mas todos os pedidos chegariam ao gateway com o IP do nginx, e o limite por IP passaria
   a ser global.
+
+## D33 — App mobile no Expo SDK 57 (e não no 58)
+
+**Data:** 2026-10-31 · **Fase:** F9
+
+- A especificação pede o SDK estável mais recente **e** que a app corra no Expo Go, sem
+  _development build_. O SDK 58 saiu a 2026-10-15, mas as notas de lançamento dizem que o Expo Go
+  para o 58 só chega às lojas «dentro de algumas semanas». Com o 58, um telemóvel com o Expo Go da
+  loja não abria a app.
+- O SDK 57 (expo 57.0.31, React Native 0.86, React 19.2) é o mais recente que o Expo Go das lojas
+  suporta. Todas as dependências nativas estão nas versões indicadas para o SDK 57
+  (`react-native-maps`, `reanimated`, `worklets`, `screens`, …); `pnpm peers check` sem avisos.
+- O pnpm com instalações isoladas funciona desde o SDK 54 e o Metro configura o monorepo sozinho
+  (SDK 52+), por isso não foi preciso `node-linker=hoisted`.
+- Atualizar para o 58 quando o Expo Go estiver nas lojas: `npx expo install expo@^58 --fix`.
+- Alternativa rejeitada: SDK 58 com _development build_. Obrigava a instalar Android Studio/Xcode
+  para testar, contra o requisito do Expo Go.
+
+## D34 — Cliente, sessão e rascunho na app mobile
+
+**Data:** 2026-10-31 · **Fase:** F9
+
+- **Navegação:** Expo Router com grupos `(auth)`, `(tabs)` e `reportar` (modal de ecrã inteiro).
+  A barra inferior é um componente próprio: «Reportar» não é um separador, abre o assistente por
+  cima. Os guardas de sessão estão nos `_layout` (sem sessão → login).
+- **Pedidos:** axios com dois intercetores. O primeiro junta o `Bearer`; o segundo, num 401,
+  renova o token uma vez (pedidos simultâneos partilham a mesma renovação) e repete o pedido. Se a
+  renovação falhar, termina a sessão com «A sessão expirou…». Todos os erros passam por
+  `toApiError`, que dá sempre uma mensagem em PT-PT (rede, 429, 5xx, 403 ou a mensagem da API).
+- **Sessão:** zustand + `expo-secure-store` (Keychain/Keystore). No build web, `sessionStorage`.
+  A app recusa contas de gestor/admin no login e revoga logo os tokens delas.
+- **Rascunho:** a ocorrência em curso vive num store zustand fora dos ecrãs. Voltar atrás,
+  «Editar» na revisão ou um erro de rede no envio não apagam nada; só «Descartar» (D1) e o ecrã de
+  confirmação o limpam.
+- **Fotografia:** `expo-image-manipulator` reduz para ≤ 1600 px e grava JPEG baixando a qualidade
+  (0,8 → 0,35) até ≤ 2 MB; o servidor volta a validar.
+- **Mapa:** `react-native-maps` com `mapType="none"` e `UrlTile` dos mosaicos OSM, para não
+  depender de chaves do Google/Apple; atribuição «© colaboradores do OpenStreetMap» sempre
+  visível.
+- **Build web só para verificação:** não há emulador nesta máquina, por isso o fluxo completo foi
+  verificado no browser (`pnpm --filter mobile web`, porta 8082, autorizada em `CORS_ORIGINS`).
+  `SinalizaMap.web.tsx` usa Leaflet e `token-storage.web.ts` usa `sessionStorage`; o Metro escolhe
+  estes ficheiros pela extensão. Os bundles nativos foram compilados com `expo export` (Android e
+  iOS) para garantir que o código nativo também compila.
+- Alternativa rejeitada: React Navigation configurado à mão. O Expo Router dá as mesmas pilhas e
+  separadores com rotas por ficheiro e ligações profundas (`sinaliza://minhas/<id>`) sem código.

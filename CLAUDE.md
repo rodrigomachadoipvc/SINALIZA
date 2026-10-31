@@ -76,6 +76,9 @@ pnpm --filter @sinaliza/system-tests cleanup   # apaga restos de testes interrom
 pnpm --filter backoffice dev    # backoffice em http://localhost:5173 (usa a API em :8080)
 pnpm --filter backoffice test   # testes do backoffice (Vitest + Testing Library, API simulada)
 docker compose up -d --build backoffice   # backoffice servido por nginx em http://localhost:8081
+pnpm --filter mobile start      # app Expo (QR code para o Expo Go; API em apps/mobile/.env)
+pnpm --filter mobile web        # build web da app em http://localhost:8082 (só verificação)
+pnpm --filter mobile test       # testes da app (Jest + Testing Library, API simulada)
 
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)

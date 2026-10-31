@@ -40,7 +40,14 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     gestor e admin verificados no browser contra a API real em :8081 (validar → iniciar resolução
     → resolver, rejeitar, duplicada com pesquisa, alterar categoria, mapa, dashboard, criar e
     desativar categoria, criar gestor)
-- [ ] **F9** — App mobile completa
+- [x] **F9** — App mobile completa
+  - Critério: `expo start` sem erros; typecheck, lint e 17 testes (Jest + Testing Library: erros
+    da API, renovação do token, login 401, passo 2, anular só em «Recebida», formatação,
+    fotografia, rascunho); bundles Android e iOS compilados com `expo export`; fluxo completo do
+    cidadão verificado contra a API real no build web (registo, login 401 → sucesso, mapa com
+    filtros e painel D4, assistente com fotografia comprimida, fora/dentro do concelho, «Editar»,
+    erro de rede e novo envio, detalhe, anular, lista e filtros, perfil, palavra-passe, renovação
+    do token, terminar sessão, gestor recusado, recuperar palavra-passe)
 - [ ] **F10** — Analytics/Databricks (gerador, export, notebooks, bundle, fonte `databricks`)
 - [ ] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
 - [ ] **F12** — Verificação final
@@ -99,5 +106,9 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   root em :8081 (`docker compose up -d --build backoffice`), com `/config.js` gerado em runtime
   (D30–D32). Logotipo em `packages/shared/assets/` (usado também pela app mobile).
   `PASSWORD_RESET_URL` passou a apontar para :8081.
-- Próximo passo: F9 (app mobile Expo): registo/login, criar ocorrência com fotografia e mapa,
-  lista e detalhe das minhas ocorrências, perfil.
+- F9: `apps/mobile` (Expo SDK 57 por causa do Expo Go — D33; Expo Router, TanStack Query,
+  zustand, react-hook-form + zod, axios com renovação do token, secure-store, react-native-maps +
+  OSM — D34). Endereço da API em `apps/mobile/.env` (`EXPO_PUBLIC_API_URL`, ver
+  `apps/mobile/README.md`). Build web em :8082 só para verificação (CORS autorizado). Falta testar
+  num telemóvel real com o Expo Go.
+- Próximo passo: F10 (analytics/Databricks).
