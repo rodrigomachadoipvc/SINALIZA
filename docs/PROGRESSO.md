@@ -76,7 +76,19 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     `ficheiros.localhost` (GET sem assinatura → 403). `backup-postgres.sh` testado com restauro
     numa base temporária (20 040 ocorrências, geometrias válidas). Não foi feita uma instalação
     numa VM real (fica para o Rodrigo, com `docs/DEPLOY.md`).
-- [ ] **F12** — Verificação final
+- [x] **F12** — Verificação final
+  - Critério: `sh scripts/verificar.sh --completo` ✅ (pré-requisitos, `pnpm install`, compose com
+    todos os contentores _healthy_, seed, lint, typecheck, testes dos pacotes e testes de
+    requisitos: 21/21 itens, RF01–RF20). Testes: 300 Vitest (unitários e e2e com Testcontainers)
+    + 17 Jest da app mobile + 45 pytest do `analytics/` + 22 de requisitos contra a stack real;
+    `ruff`, `mypy` e `databricks bundle validate` sem erros; links relativos da documentação
+    verificados. A primeira corrida (logo a seguir a reconstruir as imagens) teve uma falha
+    intermitente no e2e do municipal-service (`Server has closed the connection` do PostgreSQL do
+    Testcontainers, depois das migrações); não se reproduziu sozinho, no `pnpm test` completo nem
+    numa segunda corrida completa. Se voltar a acontecer, o próximo passo é correr os e2e dos
+    pacotes com menos paralelismo.
+  - Fica para o Rodrigo: testar a app num telemóvel real com o Expo Go e a instalação numa VM
+    (`docs/DEPLOY.md`).
 
 ## Notas para retomar
 
@@ -148,4 +160,4 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   perfil `local`, URLs derivados de `SINALIZA_DOMAIN`) e `infra/caddy/Caddyfile` com
   `api.`/`backoffice.`/`ficheiros.<domínio>` (D40). Na VM, `COMPOSE_FILE` no `.env` ativa o
   override em todos os comandos. Backups: `scripts/backup-postgres.sh` + `cron` (`DEPLOY.md` §8).
-- Próximo passo: F12 (verificação final).
+- Todas as fases (F0–F12) concluídas.
