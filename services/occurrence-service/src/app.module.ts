@@ -14,6 +14,8 @@ import { OccurrencesController } from './occurrences/occurrences.controller.js';
 import { OccurrencesService } from './occurrences/occurrences.service.js';
 import { PhotosController } from './photos/photos.controller.js';
 import { PrismaService } from './prisma.service.js';
+import { DatabricksSqlClient } from './stats/databricks-sql.client.js';
+import { DatabricksStatsProvider } from './stats/databricks-stats.provider.js';
 import { PostgresStatsProvider } from './stats/postgres-stats.provider.js';
 import { StatsController } from './stats/stats.controller.js';
 import { STATS_PROVIDER } from './stats/stats.provider.js';
@@ -46,7 +48,17 @@ export class AppModule {
         GeocoderService,
         StorageService,
         OccurrencesService,
-        { provide: STATS_PROVIDER, useClass: PostgresStatsProvider },
+        {
+          provide: STATS_PROVIDER,
+          inject: [PrismaService],
+          useFactory: (prisma: PrismaService) =>
+            config.analytics.source === 'databricks'
+              ? new DatabricksStatsProvider(
+                  new DatabricksSqlClient(config.analytics.databricks),
+                  config.analytics.databricks.cacheTtlMs,
+                )
+              : new PostgresStatsProvider(prisma),
+        },
       ],
     };
   }

@@ -220,6 +220,7 @@ export async function startHarness(): Promise<Harness> {
     },
     photoUrlTtlSeconds: 900,
     nominatim: { url: urlOf(nominatim), userAgent: 'Sinaliza/test', timeoutMs: 2000 },
+    analytics: { source: 'postgres' },
   };
 
   // Capture every event: a private queue bound to the exchange with `#`.

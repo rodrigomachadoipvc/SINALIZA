@@ -4,10 +4,9 @@ import type { OccurrenceStatus } from '@sinaliza/shared';
 import { PrismaService } from '../prisma.service.js';
 import type { DashboardDto, Period } from './stats.dto.js';
 import type { StatsProvider } from './stats.provider.js';
+import { round } from './stats.util.js';
 
 const HOTSPOT_LIMIT = 50;
-
-const round = (n: number, digits = 2): number => Number(n.toFixed(digits));
 
 /**
  * Dashboard metrics computed in the operational database (ANALYTICS_SOURCE=postgres), over the

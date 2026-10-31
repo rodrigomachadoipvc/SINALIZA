@@ -20,6 +20,21 @@ export interface StorageConfig {
   bucket: string;
 }
 
+export interface DatabricksConfig {
+  /** Workspace URL, e.g. https://dbc-1234abcd-5678.cloud.databricks.com */
+  host: string;
+  token: string;
+  warehouseId: string;
+  catalog: string;
+  /** How long a computed dashboard is reused (the gold tables change once a day). */
+  cacheTtlMs: number;
+  timeoutMs: number;
+}
+
+/** Where `/stats/dashboard` reads from (ANALYTICS_SOURCE). */
+export type AnalyticsConfig =
+  { source: 'postgres' } | { source: 'databricks'; databricks: DatabricksConfig };
+
 export interface OccurrenceConfig {
   port: number;
   databaseUrl: string;
@@ -35,9 +50,35 @@ export interface OccurrenceConfig {
     userAgent: string;
     timeoutMs: number;
   };
+  analytics: AnalyticsConfig;
 }
 
 type Env = Record<string, string | undefined>;
+
+export function loadAnalyticsConfig(env: Env): AnalyticsConfig {
+  const source = env.ANALYTICS_SOURCE || 'postgres';
+  if (source === 'postgres') return { source };
+  if (source !== 'databricks') {
+    throw new Error(`ANALYTICS_SOURCE must be "postgres" or "databricks", got "${source}"`);
+  }
+  const rawHost = requireEnv(env, 'DATABRICKS_HOST').replace(/\/+$/, '');
+  const host = /^https?:\/\//.test(rawHost) ? rawHost : `https://${rawHost}`;
+  if (!host.startsWith('https://')) throw new Error('DATABRICKS_HOST must use https');
+  const catalog = env.DATABRICKS_CATALOG || 'sinaliza';
+  if (!/^[a-z_][a-z0-9_]*$/.test(catalog))
+    throw new Error(`Invalid DATABRICKS_CATALOG "${catalog}"`);
+  return {
+    source,
+    databricks: {
+      host,
+      token: requireEnv(env, 'DATABRICKS_TOKEN'),
+      warehouseId: requireEnv(env, 'DATABRICKS_WAREHOUSE_ID'),
+      catalog,
+      cacheTtlMs: intEnv(env, 'ANALYTICS_CACHE_SECONDS', 600) * 1000,
+      timeoutMs: intEnv(env, 'DATABRICKS_TIMEOUT_MS', 60_000),
+    },
+  };
+}
 
 export function loadConfig(env: Env = process.env): OccurrenceConfig {
   const endpoint = env.S3_ENDPOINT ?? `http://localhost:${env.S3_API_PORT ?? '9000'}`;
@@ -65,5 +106,6 @@ export function loadConfig(env: Env = process.env): OccurrenceConfig {
         'Sinaliza/1.0 (+https://github.com/rodrigomachadoipvc/SINALIZA)',
       timeoutMs: intEnv(env, 'NOMINATIM_TIMEOUT_MS', 4000),
     },
+    analytics: loadAnalyticsConfig(env),
   };
 }

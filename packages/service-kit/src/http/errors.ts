@@ -24,3 +24,6 @@ export const unprocessable = (message: string, details?: unknown): LocalizedHttp
 
 export const tooManyRequests = (message: string): LocalizedHttpException =>
   new LocalizedHttpException(HttpStatus.TOO_MANY_REQUESTS, message);
+
+export const badGateway = (message: string): LocalizedHttpException =>
+  new LocalizedHttpException(HttpStatus.BAD_GATEWAY, message);
