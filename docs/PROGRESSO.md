@@ -144,7 +144,7 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   root em :8081 (`docker compose up -d --build backoffice`), com `/config.js` gerado em runtime
   (D30–D32). Logotipo em `packages/shared/assets/` (usado também pela app mobile).
   `PASSWORD_RESET_URL` passou a apontar para :8081.
-- F9: `apps/mobile` (Expo SDK 58 desde a D41; antes SDK 57 — D33; Expo Router, TanStack Query,
+- F9: `apps/mobile` (mapa com agrupamento e `bbox` desde a D42; Expo SDK 58 desde a D41; antes SDK 57 — D33; Expo Router, TanStack Query,
   zustand, react-hook-form + zod, axios com renovação do token, secure-store, react-native-maps +
   OSM — D34). Endereço da API em `apps/mobile/.env` (`EXPO_PUBLIC_API_URL`, ver
   `apps/mobile/README.md`). Build web em :8082 só para verificação (CORS autorizado). Falta testar

@@ -37,5 +37,6 @@ pnpm --filter mobile test               # Jest + Testing Library (API simulada)
 - `src/api/` — cliente axios (token, renovação automática, mensagens de erro) e queries.
 - `src/store/draft.ts` — rascunho da ocorrência (zustand), que sobrevive a erros de envio.
 - `src/map/` — `SinalizaMap` com `react-native-maps` + mosaicos OSM; a versão `.web.tsx` usa
-  Leaflet.
+  Leaflet. Os dois agrupam os pinos com `supercluster` (`cluster.ts`) e o ecrã do mapa só pede
+  as ocorrências da área visível (D42).
 - `src/i18n/pt-PT.ts` — todos os textos.

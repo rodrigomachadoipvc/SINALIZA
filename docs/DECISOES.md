@@ -556,3 +556,23 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
   `headerShown: false`), por isso nada mais muda.
 - Alternativa rejeitada: ficar no SDK 57 e usar um simulador de iOS ou um _development build_.
   Obrigava a ter Xcode (só em macOS) e contrariava o requisito de correr no Expo Go.
+
+## D42 — Mapa da app com agrupamento de pinos e pedido só da área visível
+
+**Data:** 2026-10-31 · **Fase:** correção depois da F12
+
+- Com as ~20 000 ocorrências geradas, o mapa da app recebia sempre o máximo de 2000 pinos e
+  desenhava cada um como uma vista nativa (`Marker` com uma `View`). Ao mudar de categoria as
+  2000 vistas eram destruídas e criadas de novo, e o ecrã encravava. A API respondia em ~80 ms; o
+  problema estava só na app.
+- Agrupamento no cliente com `supercluster` 9.1.0 (só JavaScript, funciona no Expo Go e na versão
+  web): bolhas com o número de ocorrências, que aproximam o mapa quando se tocam. No ecrã de
+  arranque passou de 2000 para ~90 marcadores. O raio é 100 porque o `supercluster` mede em
+  mosaicos de 512 px e os nossos níveis de zoom usam 256 px (≈ 50 px no ecrã).
+- O pedido `GET /map/occurrences` passou a levar o `bbox` da área visível, com meia área de margem
+  e arredondado para uma grelha de 0,02°: pequenos deslocamentos dão a mesma chave do TanStack
+  Query e reaproveitam a resposta em cache. Ao aproximar o mapa, deixa de se cortar nos 2000.
+- A API não mudou: o `bbox` já existia e o comentário do `MAP_PIN_LIMIT` já contava com isto.
+- Alternativa rejeitada: agregar no servidor (contagens por grelha em PostGIS). Dava menos dados
+  na rede, mas exigia um endpoint novo e mudanças no backoffice, que já agrupa no cliente com o
+  `react-leaflet-cluster`.
