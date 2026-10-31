@@ -29,3 +29,6 @@ Thumbs.db
 
 # System test reports (scripts/verificar.sh)
 tests/system/reports/
+
+# PostgreSQL dumps (scripts/backup-postgres.sh)
+backups/
