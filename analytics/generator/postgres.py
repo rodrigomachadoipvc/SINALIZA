@@ -52,11 +52,24 @@ def count_generated(conn: psycopg.Connection) -> int:
 def purge(env: Mapping[str, str]) -> int:
     """Deletes the generated occurrences (their history goes with them, ON DELETE CASCADE).
 
-    Generated duplicates point to generated originals, so they are deleted first. The reference
-    counters go back to the highest number still in use, so new reports do not skip thousands.
+    Generated duplicates point to generated originals, so they are deleted first.
+
+    The load numbered the generated occurrences right after the counter of each year, so the
+    counter goes back to just before the first generated number — or stays at the highest number
+    still in use if real reports came after. It never goes lower: numbers of deleted occurrences
+    may already be in emails and are not handed out again.
     """
     with psycopg.connect(database_url(env, "OCCURRENCE", "occurrence_db")) as conn:
         conn.execute("LOCK TABLE reference_counters IN EXCLUSIVE MODE")
+        before = conn.execute(
+            """
+            SELECT split_part(reference, '-', 2)::int AS year,
+                   min(split_part(reference, '-', 3)::int) - 1 AS last_before
+            FROM occurrences WHERE citizen_email LIKE %s
+            GROUP BY 1
+            """,
+            (GENERATED,),
+        ).fetchall()
         dups = conn.execute(
             "DELETE FROM occurrences WHERE citizen_email LIKE %s AND original_id IS NOT NULL",
             (GENERATED,),
@@ -64,14 +77,19 @@ def purge(env: Mapping[str, str]) -> int:
         rest = conn.execute(
             "DELETE FROM occurrences WHERE citizen_email LIKE %s", (GENERATED,)
         ).rowcount
-        conn.execute(
-            """
-            UPDATE reference_counters c SET last_value = coalesce((
-              SELECT max(split_part(o.reference, '-', 3)::int) FROM occurrences o
-              WHERE split_part(o.reference, '-', 2)::int = c.year
-            ), 0)
-            """
-        )
+        with conn.cursor() as cur:
+            cur.executemany(
+                """
+                UPDATE reference_counters c SET last_value = greatest(%(last_before)s, coalesce((
+                  SELECT max(split_part(o.reference, '-', 3)::int) FROM occurrences o
+                  WHERE o.reference LIKE 'SIN-' || c.year || '-%%'
+                ), 0))
+                WHERE c.year = %(year)s
+                """,
+                [{"year": year, "last_before": last} for year, last in before],
+            )
+            # Years the load created and nobody else used (a missing row means 0 anyway).
+            cur.execute("DELETE FROM reference_counters WHERE last_value = 0")
     return dups + rest
 
 
