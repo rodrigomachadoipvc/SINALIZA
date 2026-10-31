@@ -412,3 +412,98 @@ dos corpos continua a ser feita só pelos serviços. Erros de ligação dão 503
   iOS) para garantir que o código nativo também compila.
 - Alternativa rejeitada: React Navigation configurado à mão. O Expo Router dá as mesmas pilhas e
   separadores com rotas por ficheiro e ligações profundas (`sinaliza://minhas/<id>`) sem código.
+
+## D35 — O lake não recebe dados pessoais dos cidadãos
+
+**Data:** 2026-10-31 · **Fase:** F10
+
+- O export e o gerador escrevem as mesmas colunas (`analytics/common/lake.py`); `write_table`
+  recusa colunas a mais. Das ocorrências segue o `citizen_id` (UUID, pseudónimo) e os campos dos
+  indicadores; **nunca** o nome, o email nem a descrição escrita pelo cidadão (texto livre, pode
+  conter dados pessoais). As fotografias também não: só `has_photo`.
+- Os indicadores não precisam de saber quem reportou, e o Databricks é um serviço externo:
+  minimização de dados (RGPD, art. 5.º, n.º 1, alínea c)).
+- Na gold só há agregados; o grupo de leitores (e o token do `occurrence-service`) só tem
+  `SELECT` na gold, e o notebook 04 retira explicitamente acessos à bronze e à silver. As colunas
+  pseudónimas e de localização têm _tags_ no Unity Catalog.
+- Alternativa rejeitada: copiar as tabelas inteiras e mascarar na silver. Os dados pessoais
+  ficariam na bronze (e nos ficheiros do volume) para sempre.
+
+## D36 — Gold com o grão diário que reproduz os números do Postgres
+
+**Data:** 2026-10-31 · **Fase:** F10
+
+- O backoffice aceita qualquer período (`de`/`até`, dias em Europe/Lisbon). Para que a fonte
+  `databricks` dê exatamente os mesmos números que a `postgres`, a `gold.kpi_diario` guarda, por
+  dia × categoria × estado, as `criadas` (pelo dia de criação e estado atual) e as `resolvidas` com
+  a `soma_dias_resolucao` (pelo dia de resolução). Totais, taxas, distribuições, tendência e tempo
+  médio somam-se sobre o intervalo; a média é `soma / resolvidas`, nunca uma média de médias.
+- Pontos quentes: H3 de resolução 9 na silver e 8 na `gold.hotspots_h3` (~460 m de lado), perto
+  da grelha de ~500 m da vista `occurrence_facts`. Os hexágonos não coincidem com os quadrados,
+  por isso o mapa muda ligeiramente de fonte para fonte.
+- As restantes tabelas (`tempo_resolucao` com mediana e p90, `tendencia_mensal`, `taxas`,
+  `backlog`) servem o notebook 05 e o dashboard AI/BI.
+- A gold é recalculada por inteiro em cada execução (`CREATE OR REPLACE`): com dezenas de milhares
+  de linhas demora segundos, e o Delta guarda as versões anteriores. O notebook 03 termina com uma
+  verificação gold = silver que faz falhar o job se não baterem.
+- Alternativa rejeitada: uma tabela gold por mês e categoria. Não permitia períodos que começam a
+  meio do mês sem voltar à silver.
+
+## D37 — Silver com MERGE, restrições e quarentena; Liquid Clustering em vez de ZORDER
+
+**Data:** 2026-10-31 · **Fase:** F10
+
+- O export é incremental por `updated_at` e reenvia as linhas da fronteira; a silver usa
+  `MERGE INTO … ON id` e só atualiza quando o `updated_at` é mais recente, por isso repetir uma
+  carga não muda nada. Só se lê a bronze ingerida depois da última carga (`_ingested_at`).
+- Regras de qualidade como restrições Delta (`NOT NULL`, `CHECK` de estado, referência,
+  coordenadas no concelho, datas coerentes). Uma linha inválida faria falhar o lote inteiro, por
+  isso é desviada antes para `silver.occurrences_quarentena` com o motivo.
+- `silver.occurrences` agrupada por `category_slug, created_date` com **Liquid Clustering**
+  (notebook 04). O `ZORDER` reescreve todos os ficheiros em cada `OPTIMIZE` e fixa as colunas; o
+  Liquid Clustering é incremental, as chaves mudam com um `ALTER TABLE` e é o recomendado pela
+  Databricks para tabelas novas. Particionar por dia criaria milhares de ficheiros minúsculos.
+- Change Data Feed ligado nas tabelas silver.
+- Alternativa rejeitada: Lakeflow Declarative Pipelines (DLT) com _expectations_. Na Free Edition
+  só há um pipeline ativo por tipo e a especificação pede notebooks e um job.
+
+## D38 — Fonte `databricks` pela SQL Statement Execution API, com cache
+
+**Data:** 2026-10-31 · **Fase:** F10
+
+- O `occurrence-service` chama `POST /api/2.0/sql/statements` com `fetch` (sem SDK nem driver
+  JDBC/ODBC): resultados `JSON_ARRAY` em linha, `wait_timeout` de 50 s com `CANCEL`, parâmetros
+  nomeados `DATE` (`:date_from`, `:date_to`) e catálogo/esquema no pedido, por isso o SQL não é
+  concatenado. As seis consultas estão em `databricks-queries.ts`; um teste em `analytics/tests`
+  garante que são as mesmas do notebook 05.
+- Cache por período durante 10 min (`ANALYTICS_CACHE_SECONDS`): a gold muda uma vez por dia e o
+  warehouse 2X-Small da Free Edition desliga-se quando parado. Pedidos simultâneos partilham a
+  mesma consulta; falhas não ficam em cache; no máximo 100 períodos guardados.
+- Se o Databricks falhar, a API responde 502 com mensagem em PT-PT. Não há recurso automático ao
+  Postgres: o painel diz sempre de onde vêm os números, e misturar fontes sem aviso esconderia a
+  falha. Para voltar à base operacional muda-se `ANALYTICS_SOURCE`.
+- Em modo `databricks` o serviço não arranca sem `DATABRICKS_HOST`, `DATABRICKS_TOKEN` e
+  `DATABRICKS_WAREHOUSE_ID` (o _host_ tem de ser https).
+- Alternativa rejeitada: `@databricks/sql` (Thrift). Mais uma dependência nativa para seis
+  consultas agregadas que a API REST resolve.
+
+## D39 — Gerador sintético: modelo explícito, carga transacional e dados removíveis
+
+**Data:** 2026-10-31 · **Fase:** F10
+
+- Python 3.11 com uv (`analytics/pyproject.toml`), versões fixas e `exclude-newer` (só versões
+  publicadas há pelo menos dois dias, como o `minimumReleaseAge` do pnpm).
+- Todas as hipóteses estão em `generator/model.py` (pesos, sazonalidade, focos, prazos, textos) e
+  o mesmo _seed_ dá os mesmos dados. A chuva é uma série simulada (mais húmida no outono e
+  inverno) e as vias reagem aos três dias anteriores. As transições seguem a máquina de estados
+  real e as ações do gestor caem em horário de expediente; os testes verificam ambas.
+- `--load-postgres` faz tudo numa transação: bloqueia `reference_counters`, numera a seguir aos
+  contadores, insere com `COPY`, confirma com `ST_Contains` que todos os pontos estão no limite em
+  cache e só então faz _commit_. Não publica eventos (não há emails).
+- Os cidadãos gerados usam o domínio reservado `gerado.sinaliza.test`; `--purge`/`--replace`
+  encontram-nos por ele. O _purge_ repõe cada contador no valor anterior à carga e nunca abaixo:
+  números já usados (e enviados por email) não voltam a ser atribuídos.
+- Os notebooks não correm fora do Databricks; os testes validam formato, Python (`ast`), SQL no
+  dialeto Databricks (`sqlglot`) e o grafo do job.
+- Alternativa rejeitada: inserir pela API. Não permite datas passadas nem históricos com dias de
+  intervalo, e enviaria milhares de emails.

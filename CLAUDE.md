@@ -80,6 +80,14 @@ pnpm --filter mobile start      # app Expo (QR code para o Expo Go; API em apps/
 pnpm --filter mobile web        # build web da app em http://localhost:8082 (só verificação)
 pnpm --filter mobile test       # testes da app (Jest + Testing Library, API simulada)
 
+# analytics (Python 3.11 com uv; lê o .env da raiz — ver analytics/README.md)
+cd analytics && uv sync                        # ambiente Python
+uv run sinaliza-generate                       # ~20 000 ocorrências sintéticas → output/generated/*.parquet
+uv run sinaliza-generate --load-postgres       # + insere na occurrence_db (--replace, --purge para apagar)
+uv run sinaliza-export                         # occurrence_db + municipal_db → Parquet → volume (--no-upload, --full)
+uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest
+databricks bundle deploy && databricks bundle run lakehouse_diario   # job bronze → silver → gold
+
 # identity-service fora do Docker (lê o .env da raiz; precisa da infraestrutura a correr)
 pnpm --filter identity-service migrate          # aplica migrações (prisma migrate deploy)
 pnpm --filter identity-service build && pnpm --filter identity-service seed   # contas de demo

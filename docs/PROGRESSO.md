@@ -48,7 +48,16 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
     filtros e painel D4, assistente com fotografia comprimida, fora/dentro do concelho, «Editar»,
     erro de rede e novo envio, detalhe, anular, lista e filtros, perfil, palavra-passe, renovação
     do token, terminar sessão, gestor recusado, recuperar palavra-passe)
-- [ ] **F10** — Analytics/Databricks (gerador, export, notebooks, bundle, fonte `databricks`)
+- [x] **F10** — Analytics/Databricks (gerador, export, notebooks, bundle, fonte `databricks`)
+  - Critério: gerador e export correm localmente ✅ (19 986 ocorrências e 74 553 eventos gerados e
+    carregados na `occurrence_db` em ~20 s; dashboard Postgres com esses dados em 1,1–1,6 s; export
+    completo e incremental para Parquet; `--purge` repõe a base e os contadores); notebooks válidos
+    ✅ (45 testes pytest: gerador, export, formato dos notebooks, SQL no dialeto Databricks via
+    sqlglot, grafo do bundle, consultas iguais às do serviço); `DatabricksStatsProvider` com 9
+    testes unitários (pedido, _chunks_, erros, mapeamento, cache, 502, configuração) e verificado
+    no compose (`postgres` por omissão; `databricks` com _host_ inacessível → 502 em PT-PT; sem
+    variáveis → não arranca). Os notebooks e o job não correram num workspace real (falta conta
+    Databricks com token).
 - [ ] **F11** — Cloud (Caddy, `docker-compose.cloud.yml`, `DEPLOY.md`) + README + `ARQUITETURA.md`
 - [ ] **F12** — Verificação final
 
@@ -111,4 +120,10 @@ Especificação: `docs/ESPECIFICACAO.md` (secção 14 tem os critérios de concl
   OSM — D34). Endereço da API em `apps/mobile/.env` (`EXPO_PUBLIC_API_URL`, ver
   `apps/mobile/README.md`). Build web em :8082 só para verificação (CORS autorizado). Falta testar
   num telemóvel real com o Expo Go.
-- Próximo passo: F10 (analytics/Databricks).
+- F10: `analytics/` (uv, Python 3.11): `sinaliza-generate` (gerador; `--load-postgres`,
+  `--purge`), `sinaliza-export` (Parquet incremental → volume `sinaliza.bronze.landing`), notebooks
+  `00`–`05` e `databricks.yml` (job diário 01 → 02 → 03). Lake sem dados pessoais (D35), gold no
+  grão diário (D36), silver com MERGE/quarentena e Liquid Clustering (D37), fonte `databricks`
+  com cache de 10 min e 502 em falha (D38), gerador transacional e removível (D39). Para ligar a um
+  workspace real seguir `analytics/README.md` (conta Free Edition, token, warehouse, `.env`).
+- Próximo passo: F11 (cloud, README, `ARQUITETURA.md`).
