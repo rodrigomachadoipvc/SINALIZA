@@ -11,3 +11,4 @@ analytics/.pytest_cache
 analytics/.ruff_cache
 analytics/.mypy_cache
 analytics/output
+analytics/.databricks
